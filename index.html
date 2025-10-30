@@ -123,114 +123,196 @@
   </div>
 
   <!-- ====================== SCRIPTS ====================== -->
-  <script type="module">
-    // ---------- IMPORTS FIREBASE ----------
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import {
-      getDatabase, ref, onChildAdded, push, set, serverTimestamp,
-      onDisconnect, onValue, update, get, child
-    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+<script type="module">
+  // ---------- IMPORTS FIREBASE ----------
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+  import {
+    getDatabase, ref, onChildAdded, push, set, serverTimestamp,
+    onDisconnect, onValue, update, get, child
+  } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+  import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
-    // ---------- IMPORTA SUA CONFIG DE UM ARQUIVO EXTERNO ----------
-    import { firebaseConfig } from "./firebase-config.js";
+  // ---------- IMPORTA SUA CONFIG ----------
+  import { firebaseConfig } from "./firebase-config.js";
 
-    // ---------- INICIALIZA FIREBASE ----------
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+  // ---------- INICIALIZA FIREBASE ----------
+  const app = initializeApp(firebaseConfig);
+  const db  = getDatabase(app);
+  const auth = getAuth(app);
 
-    // =========================================================
-    // =============== LÓGICA DO USUÁRIO (CLIENTE) =============
-    // =========================================================
-    const loginCard = document.getElementById('loginCard');
-    const chatWrap  = document.getElementById('chatWrap');
-    const loginForm = document.getElementById('loginForm');
-    const nomeInput = document.getElementById('nomeInput');
-    const setorInput= document.getElementById('setorInput');
-    const chatTitle = document.getElementById('chatTitle');
-    const messagesEl= document.getElementById('messages');
-    const msgForm   = document.getElementById('msgForm');
-    const msgInput  = document.getElementById('msgInput');
-    const statusDot = document.getElementById('statusDot');
-    const statusText= document.getElementById('statusText');
-    const sairBtn   = document.getElementById('sairBtn');
+  // Helpers gerais
+  const $ = sel => document.querySelector(sel);
+  const fmtTime = ts => new Date(Number(ts||Date.now())).toLocaleString();
+  const escapeHtml = s => String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 
-    function resetUserView(){
-      if(loginCard) loginCard.classList.remove('hidden');
-      if(chatWrap)  chatWrap.classList.add('hidden');
-    }
-    resetUserView();
+  // ======= ELEMENTOS (USUÁRIO) =======
+  const loginCard = $('#loginCard');
+  const chatWrap  = $('#chatWrap');
+  const loginForm = $('#loginForm');
+  const nomeInput = $('#nomeInput');
+  const setorInput= $('#setorInput');
+  const chatTitle = $('#chatTitle');
+  const messagesEl= $('#messages');
+  const msgForm   = $('#msgForm');
+  const msgInput  = $('#msgInput');
+  const statusDot = $('#statusDot');
+  const statusText= $('#statusText');
+  const sairBtn   = $('#sairBtn');
 
-    let roomId = null;
-    let userLabel = null;
-    let roomRef = null;
-    let msgsRef = null;
+  // ======= ELEMENTOS (ADM) =======
+  const roomsList  = $('#roomsList');
+  const filterInput= $('#filterInput');
+  const adminMessages = $('#adminMessages');
+  const roomTitle  = $('#roomTitle');
+  const roomStatusDot = $('#roomStatusDot');
+  const roomStatusText= $('#roomStatusText');
+  const adminMsgForm  = $('#adminMsgForm');
+  const adminMsgInput = $('#adminMsgInput');
+  const ding = $('#ding');
 
-    function slugify(s){
-      return s.normalize("NFD").replace(/[\u0300-\u036f]/g,"")
-        .toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
-    }
-    function fmtTime(ts){ const d=new Date(Number(ts||Date.now())); return d.toLocaleString(); }
-    function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
-    function scrollBottom(){ messagesEl.scrollTop = messagesEl.scrollHeight; }
-    function isFromOther(msg){ return msg.destinatario === "Usuário"; }
+  // ======= ROTEADOR =======
+  const views = { user: $('#view-user'), admin: $('#view-admin') };
+  function show(route){
+    Object.values(views).forEach(v => v && (v.style.display='none'));
+    if(route === 'admin'){ views.admin && (views.admin.style.display='block'); }
+    else { views.user && (views.user.style.display='block'); }
+  }
+  function resolve(){ const route=(location.hash.replace('#/','')||'user').split('/')[0]; show(route); }
+  window.addEventListener('hashchange', resolve); resolve();
 
-    function openChatUI(nome, setor){
-      loginCard.classList.add('hidden');
-      chatWrap.classList.remove('hidden');
-      chatTitle.textContent = `${nome} • ${setor}`;
-    }
+  // ========= ESTADO =========
+  let roomId = null;
+  let userLabel = null;
+  let roomRef = null;
+  let msgsRef = null;
 
-    function attachRoom(nome, setor){
-      roomRef = ref(db, `chats/${roomId}`);
-      msgsRef = ref(db, `chats/${roomId}/messages`);
+  let currentRoomId = null;
+  let currentMsgsRef = null;
 
-      update(roomRef, {
-        userLabel,
-        createdAt: serverTimestamp(),
-        lastSeenUser: serverTimestamp(),
-        status: { userOnline: true, adminOnline: false }
-      });
+  // ========= UTILS =========
+  function slugify(s){
+    return s.normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+      .toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+  }
+  function scrollBottom(el){ el.scrollTop = el.scrollHeight; }
+  function isFromOther(msg){ return msg.destinatario === "Usuário"; }
 
-      const presenceRef = ref(db, `chats/${roomId}/status/userOnline`);
-      const lastSeenRef = ref(db, `chats/${roomId}/status/userLastSeen`);
-      set(presenceRef, true);
-      onDisconnect(presenceRef).set(false);
-      onDisconnect(lastSeenRef).set(serverTimestamp());
+  function openChatUI(nome, setor){
+    loginCard.classList.add('hidden');
+    chatWrap.classList.remove('hidden');
+    chatTitle.textContent = `${nome} • ${setor}`;
+  }
+  function resetUserView(){
+    loginCard.classList.remove('hidden');
+    chatWrap.classList.add('hidden');
+  }
 
-      onValue(ref(db, `chats/${roomId}/status/adminOnline`), snap=>{
-        const online = !!snap.val();
-        statusDot.classList.toggle('online', online);
-        statusText.textContent = online ? 'ADM online' : 'ADM offline';
-      });
+  // ========= LÓGICA DO USUÁRIO =========
+  function attachRoom(nome, setor){
+    roomRef = ref(db, `chats/${roomId}`);
+    msgsRef = ref(db, `chats/${roomId}/messages`);
 
-      messagesEl.innerHTML = `<div class="center">Chat aberto. Fale com o ADM.</div>`;
-      onChildAdded(msgsRef, snapshot=>{
-        const msg = snapshot.val();
-        renderMsgUser(msg);
-        if(isFromOther(msg)) scrollBottom();
-      });
-    }
+    update(roomRef, {
+      userLabel,
+      createdAt: serverTimestamp(),
+      lastSeenUser: serverTimestamp(),
+      status: { userOnline: true, adminOnline: false }
+    });
 
-    function renderMsgUser({ texto, timestamp, destinatario }){
+    const presenceRef = ref(db, `chats/${roomId}/status/userOnline`);
+    const lastSeenRef = ref(db, `chats/${roomId}/status/userLastSeen`);
+    set(presenceRef, true);
+    onDisconnect(presenceRef).set(false);
+    onDisconnect(lastSeenRef).set(serverTimestamp());
+
+    onValue(ref(db, `chats/${roomId}/status/adminOnline`), snap=>{
+      const online = !!snap.val();
+      statusDot.classList.toggle('online', online);
+      statusText.textContent = online ? 'ADM online' : 'ADM offline';
+    });
+
+    messagesEl.innerHTML = `<div class="center">Chat aberto. Fale com o ADM.</div>`;
+    onChildAdded(msgsRef, snapshot=>{
+      const { texto, timestamp, destinatario } = snapshot.val();
       const isAdm = destinatario === "Usuário";
       const bubble = document.createElement('div');
       bubble.className = `msg ${isAdm ? 'adm' : 'me'}`;
       bubble.innerHTML = `${escapeHtml(texto)}<span class="time">${fmtTime(timestamp)}</span>`;
       messagesEl.appendChild(bubble);
+      if(isFromOther({destinatario})) scrollBottom(messagesEl);
+    });
+  }
+
+  function loadFromLocal(){
+    try{
+      const saved = JSON.parse(localStorage.getItem('chatUser') || 'null');
+      if(saved && saved.roomId && saved.userLabel && saved.nome && saved.setor){
+        ({ roomId, userLabel } = saved);
+        openChatUI(saved.nome, saved.setor);
+        attachRoom(saved.nome, saved.setor);
+      } else {
+        resetUserView();
+      }
+    }catch{ resetUserView(); }
+  }
+
+  // ========= LÓGICA DO ADMIN =========
+  function renderRoomLi(id, data){
+    const li = document.createElement('li'); li.className='room'; li.dataset.id=id;
+    const title = document.createElement('div'); title.className='title'; title.textContent=data.userLabel||id;
+    const sub = document.createElement('div'); sub.className='sub';
+    sub.textContent = data.lastMessage ? `${data.lastMessage} • ${new Date(data.lastMessageAt||Date.now()).toLocaleTimeString()}` : 'Sem mensagens';
+    const badge = document.createElement('span'); badge.className='badge'; badge.textContent='0'; badge.style.display='none';
+    li.append(title, sub, badge); li.addEventListener('click', ()=> openRoom(id)); return li;
+  }
+  function incrementBadge(li){ const badge=li.querySelector('.badge'); const n=Number(badge.textContent||'0')+1; badge.textContent=String(n); badge.style.display='inline-block'; }
+  function clearBadge(li){ const b=li.querySelector('.badge'); if(b){ b.textContent='0'; b.style.display='none'; } }
+  function fmtTime2(ts){ return new Date(Number(ts||Date.now())).toLocaleString(); }
+
+  async function openRoom(id){
+    currentRoomId = id;
+    adminMessages.innerHTML = '';
+    roomTitle.textContent = 'Carregando...';
+    adminMsgInput.disabled = true; adminMsgForm.querySelector('button').disabled = true;
+
+    const roomSnap = await get(child(ref(db), `chats/${id}`));
+    const data = roomSnap.val() || {};
+    roomTitle.textContent = data.userLabel || id;
+
+    onValue(ref(db, `chats/${id}/status`), (s)=>{
+      const st = s.val() || {};
+      roomStatusDot.classList.toggle('online', !!st.userOnline);
+      roomStatusText.textContent = st.userOnline ? 'Usuário online' : (st.userLastSeen ? `Último acesso: ${fmtTime2(st.userLastSeen)}` : 'Usuário offline');
+    });
+
+    const li = [...roomsList.children].find(x => x.dataset.id === id); if(li) clearBadge(li);
+    update(ref(db, `chats/${id}/status`), { adminOnline: true, adminLastSeen: serverTimestamp() });
+
+    const msgsRefLocal = ref(db, `chats/${id}/messages`);
+    currentMsgsRef = msgsRefLocal;
+    onChildAdded(msgsRefLocal, (snap)=>{
+      const m = snap.val();
+      const isToUser = m.destinatario === "Usuário";
+      const bubble = document.createElement('div');
+      bubble.className = `msg ${isToUser ? 'adm' : 'me'}`;
+      bubble.innerHTML = `${escapeHtml(m.texto)}<span class="time">${fmtTime2(m.timestamp)}</span>`;
+      adminMessages.appendChild(bubble);
+      scrollBottom(adminMessages);
+    });
+
+    adminMsgInput.disabled = false; adminMsgForm.querySelector('button').disabled = false;
+  }
+
+  // ========= INICIALIZAÇÃO APÓS LOGIN ANÔNIMO =========
+  onAuthStateChanged(auth, async (user)=>{
+    if(!user){
+      try { await signInAnonymously(auth); }
+      catch (e) { console.error('[Auth] Falha no login anônimo', e); }
+      return;
     }
 
-    function loadFromLocal(){
-      try{
-        const saved = JSON.parse(localStorage.getItem('chatUser') || 'null');
-        if(saved && saved.roomId && saved.userLabel && saved.nome && saved.setor){
-          ({ roomId, userLabel } = saved);
-          openChatUI(saved.nome, saved.setor);
-          attachRoom(saved.nome, saved.setor);
-        } else {
-          resetUserView();
-        }
-      }catch{ resetUserView(); }
-    }
+    // ---- Usuário (cliente) ----
+    // carrega estado salvo (se houver) e ativa handlers
     loadFromLocal();
 
     if(loginForm){
@@ -257,7 +339,7 @@
         push(msgsRef, { autor: userLabel, texto: text, timestamp: Date.now(), destinatario: "ADM" });
         update(roomRef, { lastMessage: text, lastMessageAt: serverTimestamp(), lastMessageDest: "ADM", lastSeenUser: serverTimestamp() });
         msgInput.value = "";
-        scrollBottom();
+        scrollBottom(messagesEl);
       });
     }
 
@@ -272,135 +354,55 @@
       });
     }
 
-    // =========================================================
-    // ================== LÓGICA DO ADMIN ======================
-    // =========================================================
-    const roomsList  = document.getElementById('roomsList');
-    const filterInput= document.getElementById('filterInput');
-    const adminMessages = document.getElementById('adminMessages');
-    const roomTitle  = document.getElementById('roomTitle');
-    const roomStatusDot = document.getElementById('roomStatusDot');
-    const roomStatusText= document.getElementById('roomStatusText');
-    const adminMsgForm  = document.getElementById('adminMsgForm');
-    const adminMsgInput = document.getElementById('adminMsgInput');
-    const ding = document.getElementById('ding');
-
-    let currentRoomId = null;
-    let currentMsgsRef = null;
-
-    function renderRoomLi(id, data){
-      const li = document.createElement('li'); li.className='room'; li.dataset.id=id;
-      const title = document.createElement('div'); title.className='title'; title.textContent=data.userLabel||id;
-      const sub = document.createElement('div'); sub.className='sub';
-      sub.textContent = data.lastMessage ? `${data.lastMessage} • ${new Date(data.lastMessageAt||Date.now()).toLocaleTimeString()}` : 'Sem mensagens';
-      const badge = document.createElement('span'); badge.className='badge'; badge.textContent='0'; badge.style.display='none';
-      li.append(title, sub, badge); li.addEventListener('click', ()=> openRoom(id)); return li;
-    }
-    function incrementBadge(li){ const badge=li.querySelector('.badge'); const n=Number(badge.textContent||'0')+1; badge.textContent=String(n); badge.style.display='inline-block'; }
-    function clearBadge(li){ const b=li.querySelector('.badge'); if(b){ b.textContent='0'; b.style.display='none'; } }
-    function fmtTime2(ts){ const d=new Date(Number(ts||Date.now())); return d.toLocaleString(); }
-    function escapeHtml2(s){ return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
-
-    onChildAdded(ref(db, 'chats'), (snap)=>{
-      const id = snap.key; const data = snap.val() || {};
-      const li = renderRoomLi(id, data); roomsList.appendChild(li);
-      onValue(ref(db, `chats/${id}`), (s)=>{
-        const d = s.val() || {};
-        const sub = li.querySelector('.sub');
-        sub.textContent = d.lastMessage ? `${d.lastMessage} • ${new Date(d.lastMessageAt||Date.now()).toLocaleTimeString()}` : 'Sem mensagens';
-        if(currentRoomId !== id && d.lastMessage && d.lastMessageDest === "ADM"){
-          incrementBadge(li);
-          try{ ding.currentTime = 0; ding.play(); }catch{}
-        }
-      });
-    });
-
-    if(filterInput){
-      filterInput.addEventListener('input', ()=>{
-        const q = filterInput.value.toLowerCase();
-        [...roomsList.children].forEach(li=>{
-          const t = (li.querySelector('.title').textContent + ' ' + li.querySelector('.sub').textContent).toLowerCase();
-          li.style.display = t.includes(q) ? '' : 'none';
+    // ---- ADM ----
+    if(roomsList){
+      onChildAdded(ref(db, 'chats'), (snap)=>{
+        const id = snap.key; const data = snap.val() || {};
+        const li = renderRoomLi(id, data); roomsList.appendChild(li);
+        onValue(ref(db, `chats/${id}`), (s)=>{
+          const d = s.val() || {};
+          const sub = li.querySelector('.sub');
+          sub.textContent = d.lastMessage ? `${d.lastMessage} • ${new Date(d.lastMessageAt||Date.now()).toLocaleTimeString()}` : 'Sem mensagens';
+          if(currentRoomId !== id && d.lastMessage && d.lastMessageDest === "ADM"){
+            incrementBadge(li);
+            try{ ding.currentTime = 0; ding.play(); }catch{}
+          }
         });
       });
+
+      if(filterInput){
+        filterInput.addEventListener('input', ()=>{
+          const q = filterInput.value.toLowerCase();
+          [...roomsList.children].forEach(li=>{
+            const t = (li.querySelector('.title').textContent + ' ' + li.querySelector('.sub').textContent).toLowerCase();
+            li.style.display = t.includes(q) ? '' : 'none';
+          });
+        });
+      }
+
+      adminMsgForm.addEventListener('submit', (e)=>{
+        e.preventDefault();
+        const text = adminMsgInput.value.trim();
+        if(!text || !currentRoomId || !currentMsgsRef) return;
+        push(currentMsgsRef, { autor: "ADM", texto: text, timestamp: Date.now(), destinatario: "Usuário" });
+        update(ref(db, `chats/${currentRoomId}`), {
+          lastMessage: text, lastMessageAt: serverTimestamp(), lastMessageDest: "Usuário", "status/adminLastSeen": serverTimestamp()
+        });
+        adminMsgInput.value = ''; scrollBottom(adminMessages);
+      });
+
+      window.addEventListener('beforeunload', ()=>{
+        if(currentRoomId){
+          update(ref(db, `chats/${currentRoomId}/status`), { adminOnline: false, adminLastSeen: serverTimestamp() });
+        }
+      });
     }
+  });
 
-    async function openRoom(id){
-      currentRoomId = id;
-      adminMessages.innerHTML = '';
-      roomTitle.textContent = 'Carregando...';
-      adminMsgInput.disabled = true; adminMsgForm.querySelector('button').disabled = true;
-
-      const roomSnap = await get(child(ref(db), `chats/${id}`));
-      const data = roomSnap.val() || {};
-      roomTitle.textContent = data.userLabel || id;
-
-      onValue(ref(db, `chats/${id}/status`), (s)=>{
-        const st = s.val() || {};
-        roomStatusDot.classList.toggle('online', !!st.userOnline);
-        roomStatusText.textContent = st.userOnline ? 'Usuário online' : (st.userLastSeen ? `Último acesso: ${fmtTime2(st.userLastSeen)}` : 'Usuário offline');
-      });
-
-      const li = [...roomsList.children].find(x => x.dataset.id === id); if(li) clearBadge(li);
-      update(ref(db, `chats/${id}/status`), { adminOnline: true, adminLastSeen: serverTimestamp() });
-
-      const msgsRefLocal = ref(db, `chats/${id}/messages`);
-      currentMsgsRef = msgsRefLocal;
-      onChildAdded(msgsRefLocal, (snap)=>{
-        const m = snap.val();
-        const bubble = document.createElement('div');
-        const isToUser = m.destinatario === "Usuário";
-        bubble.className = `msg ${isToUser ? 'adm' : 'me'}`;
-        bubble.innerHTML = `${escapeHtml2(m.texto)}<span class="time">${fmtTime2(m.timestamp)}</span>`;
-        adminMessages.appendChild(bubble);
-        adminMessages.scrollTop = adminMessages.scrollHeight;
-      });
-
-      adminMsgInput.disabled = false; adminMsgForm.querySelector('button').disabled = false;
-    }
-
-    adminMsgForm.addEventListener('submit', (e)=>{
-      e.preventDefault();
-      const text = adminMsgInput.value.trim();
-      if(!text || !currentRoomId || !currentMsgsRef) return;
-      push(currentMsgsRef, { autor: "ADM", texto: text, timestamp: Date.now(), destinatario: "Usuário" });
-      update(ref(db, `chats/${currentRoomId}`), {
-        lastMessage: text, lastMessageAt: serverTimestamp(), lastMessageDest: "Usuário", "status/adminLastSeen": serverTimestamp()
-      });
-      adminMsgInput.value = ''; adminMessages.scrollTop = adminMessages.scrollHeight;
-    });
-
-    window.addEventListener('beforeunload', ()=>{
-      if(currentRoomId){
-        update(ref(db, `chats/${currentRoomId}/status`), { adminOnline: false, adminLastSeen: serverTimestamp() });
-      }
-    });
-
-    // ====================== ROTEADOR =========================
-      const views = {
-       user: document.getElementById('view-user'),
-        admin: document.getElementById('view-admin')
-      };
-
-    function show(route){
-      // sempre esconde tudo
-    Object.values(views).forEach(v => { if (v) v.style.display = 'none'; });
-
-    // e mostra explicitamente o alvo
-      if (route === 'admin') {
-      if (views.admin) views.admin.style.display = 'block';
-      } else {
-        if (views.user) views.user.style.display = 'block';
-      }
-      }
-
-      function resolve(){
-        const route = (location.hash.replace('#/','') || 'user').split('/')[0];
-        show(route);
-      }
-
-      window.addEventListener('hashchange', resolve);
-      resolve();
-  </script>
+  // (opcional) logs de erro global
+  window.addEventListener('error', e => console.error('[window.error]', e.message));
+  window.addEventListener('unhandledrejection', e => console.error('[unhandledrejection]', e.reason));
+</script>
 </body>
 </html>
+
