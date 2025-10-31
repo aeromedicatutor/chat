@@ -108,14 +108,14 @@
         <div class="brand">Painel de Atendentes</div>
         <div class="search">
           <form id="admLoginForm" onsubmit="return false">
-            <input id="admEmail" type="email" required placeholder="email do atendente" />
-            <input id="admPass" type="password" required placeholder="senha" />
+          <input id="admEmail" type="email" required placeholder="email do atendente" />
+          <input id="admPass" type="password" required placeholder="senha" />
           <select id="admGroup">
-            <option value="suporte">Suporte TI</option>
-            <option value="operacao">Operação</option>
+          <option value="suporte">Suporte TI</option>
+          <option value="operacao">Operação</option>
           </select>
-            <button id="admLoginBtn" type="button">Entrar ADM</button>
-            <button id="admRegister" type="button">Cadastrar</button>
+          <button id="admLoginBtn" type="button" onclick="window.__admLogin()">Entrar ADM</button>
+          <button id="admRegister" type="button">Cadastrar</button>
           </form>
           <div style="margin-top:8px; display:flex; gap:8px">
             <button id="btnAvailable" class="btn-link">marcar disponível</button>
@@ -333,52 +333,42 @@
     const admRegisterBtn=$('#admRegister'), btnAvailable=$('#btnAvailable'), admLogout=$('#admLogout');
 
     /* ====== FORÇA O LOGIN DO ADM POR CLIQUE (insira aqui, antes do relatório XLSX) ====== */
+    // FUNÇÃO GLOBAL: login do atendente (chamada pelo onclick no botão)
+window.__admLogin = async function(){
+  try{
+    console.log('[ADM] __admLogin acionado');
+    const email = (admEmail?.value || '').trim();
+    const pass  = (admPass?.value  || '');
+    if(!email || !pass){ alert('Informe email e senha.'); return; }
 
-// pega o botão "Entrar ADM" que hoje é type="submit" dentro do form
-const admLoginBtnEl = admLoginForm?.querySelector('button[type="submit"]');
-if (admLoginBtnEl) {
-  admLoginBtnEl.type = 'button';          // evita submit padrão do form
-  admLoginBtnEl.id   = 'admLoginBtn';     // dá um id pra debug/estilo
+    const { user } = await signInWithEmailAndPassword(auth, email, pass);
 
-  admLoginBtnEl.addEventListener('click', async (e)=>{
-    e.preventDefault();
-    console.log('[ADM] clicou em Entrar');
-    try{
-      const email = (admEmail?.value || '').trim();
-      const pass  = (admPass?.value  || '');
+    isAgent = true; agentUid = user.uid;
 
-      if(!email || !pass){ alert('Informe email e senha.'); return; }
+    // lê grupo
+    const roleSnap = await get(ref(db, `roles/${user.uid}`));
+    const role = roleSnap.val() || { group: admGroup?.value || 'suporte' };
+    agentGroup = role.group || 'suporte';
 
-      const { user } = await signInWithEmailAndPassword(auth, email, pass);
+    // marca presença do agente
+    await update(ref(db, `agents/${user.uid}`), {
+      name: user.email,
+      group: agentGroup,
+      available: false,
+      online: true,
+      lastSeen: serverTimestamp()
+    });
 
-      isAgent = true;
-      agentUid = user.uid;
+    initAdmin(); // carrega lista de chats do agente
+  }catch(err){
+    console.error('Login ADM erro:', err);
+    alert(`Falha no login: ${err.code||''} ${err.message||''}`);
+  }
+};
 
-      const roleSnap = await get(ref(db, `roles/${user.uid}`));
-      const role = roleSnap.val() || { group: admGroup?.value || 'suporte' };
-      agentGroup = role.group || 'suporte';
+// evita submit do form ao pressionar Enter
+admLoginForm?.addEventListener('submit', (e)=>{ e.preventDefault(); window.__admLogin(); });
 
-      await update(ref(db, `agents/${user.uid}`), {
-        name: user.email,
-        group: agentGroup,
-        available: false,
-        online: true,
-        lastSeen: serverTimestamp()
-      });
-
-      initAdmin(); // carrega a lista de chats do agente
-    }catch(err){
-      console.error('Login ADM erro:', err);
-      alert(`Falha no login: ${err.code||''} ${err.message||''}`);
-    }
-  });
-}
-
-// se alguém apertar Enter no form, só evita submit e replica o clique
-admLoginForm?.addEventListener('submit', (e)=>{
-  e.preventDefault();
-  document.getElementById('admLoginBtn')?.click();
-});
 /* ====== FIM DO BLOCO ====== */
 
     // relatório XLSX
