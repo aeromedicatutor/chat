@@ -353,16 +353,29 @@
      });
 
     admLoginForm?.addEventListener('submit', async e=>{
-      e.preventDefault();
-      try{
-        const { user } = await signInWithEmailAndPassword(auth, admEmail.value.trim(), admPass.value);
-        isAgent = true; agentUid = user.uid;
-        const roleSnap = await get(ref(db, `roles/${user.uid}`));
-        const role = roleSnap.val() || { group: admGroup.value || 'suporte' };
-        agentGroup = role.group || 'suporte';
-        await update(ref(db, `agents/${user.uid}`), { name:user.email, group:agentGroup, available:false, online:true, lastSeen: serverTimestamp() });
-        initAdmin();
-      }catch(err){ alert('Falha no login ADM'); console.error(err); }
+    e.preventDefault();
+    try{
+     const email = admEmail.value.trim();
+     const pass  = admPass.value;
+     const { user } = await signInWithEmailAndPassword(auth, email, pass);
+     isAgent = true; agentUid = user.uid;
+
+     const roleSnap = await get(ref(db, `roles/${user.uid}`));
+     const role = roleSnap.val() || { group: admGroup.value || 'suporte' };
+     agentGroup = role.group || 'suporte';
+
+     await update(ref(db, `agents/${user.uid}`), {
+       name: user.email,
+       group: agentGroup,
+       available: false,
+       online: true,
+       lastSeen: serverTimestamp()
+    });
+      initAdmin();
+     }catch(err){
+      console.error('Login ADM erro:', err);
+      alert(`Falha no login: ${err.code||''} ${err.message||''}`);
+      }
     });
 
     btnAvailable?.addEventListener('click', async ()=>{
