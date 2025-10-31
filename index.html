@@ -3,155 +3,285 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Chat Online • Usuário / ADM</title>
+  <title>Chat • Usuário / Operador</title>
   <style>
     :root{
-      --bg:#101418; --panel:#151a20; --card:#1b2129; --bubble-user:#2a2f36;
-      --bubble-adm:#0e5f3b; --text:#e6eef7; --muted:#a7b0bb; --line:#242a32; --accent:#00e29f;
+      /* Paleta pedida: verde, branco, laranja */
+      --green: #19b66a;
+      --green-600: #0f8a50;
+      --green-700: #0a6e40;
+      --orange: #ff8a00;
+      --orange-700: #d97200;
+      --white: #ffffff;
+
+      /* Base UI */
+      --bg: #0f1216;            /* fundo principal (dark moderno p/ contrastar com branco/verde/laranja) */
+      --panel: #141a1f;         /* cartões / barras */
+      --card: #171f28;
+      --line: #1f2a36;
+      --text: #eaf0f6;
+      --muted: #9fb2c3;
+
+      /* Bubbles */
+      --bubble-user: #ff8a00;   /* laranja */
+      --bubble-op:   #0e6b3f;   /* verde mais escuro */
+      --bubble-text: #fff;
+
+      /* Badges / status */
+      --status-online-bg: #14c37f22;
+      --status-online-fg: #19b66a;
+      --status-offline-bg:#f03d3d22;
+      --status-offline-fg:#ff5b5b;
+
+      --radius-lg: 16px;
+      --radius-xl: 22px;
+      --shadow-1: 0 6px 22px rgba(0,0,0,.24);
+      --shadow-2: 0 4px 14px rgba(0,0,0,.18);
     }
-    *{box-sizing:border-box} html,body{height:100%}
-    body{margin:0; background:var(--bg); color:var(--text); font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',Arial}
-    a.link{color:var(--muted); text-decoration:none} a.link:hover{text-decoration:underline}
-    .login-card{max-width:420px; margin:10vh auto; padding:24px; background:var(--card); border:1px solid var(--line); border-radius:12px}
-    .login-card h1{margin:0 0 12px} .login-card label{display:block; margin:12px 0 6px; color:var(--muted)}
-    .login-card input,.login-card select{width:100%; padding:12px; border-radius:8px; border:1px solid var(--line); background:#0c1014; color:var(--text)}
-    .login-card button{margin-top:16px; width:100%; padding:12px; border-radius:10px; border:0; background:var(--accent); color:#002417; font-weight:700; cursor:pointer}
-    .hint{color:var(--muted); font-size:14px}
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;background:var(--bg);color:var(--text);
+      font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial;
+    }
+    a{color:var(--white);opacity:.8;text-decoration:none}
+    a:hover{opacity:1;text-decoration:underline}
     .hidden{display:none!important}
-    .chat-wrap{display:flex; flex-direction:column; height:100vh; max-width:920px; margin:0 auto}
-    .chat-header{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 14px; border-bottom:1px solid var(--line); background:var(--panel); position:sticky; top:0; z-index:10}
-    .chat-title{font-weight:700} .chat-subtitle{color:var(--muted); font-size:13px}
-    .btn-link,.link{background:none; border:0; color:var(--muted); cursor:pointer}
-    .messages{flex:1; overflow-y:auto; padding:16px; background:linear-gradient(#0c1116,#0b0e12)}
-    .msg{max-width:70%; padding:10px 12px; margin:6px 0; border-radius:14px; position:relative; word-wrap:break-word; white-space:pre-wrap}
-    .msg .time{display:block; margin-top:6px; font-size:11px; color:var(--muted); text-align:right; opacity:.8}
-    .me{background:var(--bubble-user); border-top-left-radius:4px}
-    .adm{background:var(--bubble-adm); border-top-right-radius:4px}
-    .center{margin:10px auto; text-align:center; color:var(--muted); font-size:12px}
-    .composer{border-top:1px solid var(--line); background:var(--panel); padding:10px}
-    .composer form{display:flex; gap:10px; align-items:center}
-    .composer input[type="text"]{flex:1; padding:12px; border-radius:8px; border:1px solid var(--line); background:#0c1014; color:var(--text)}
-    .composer button{padding:0 18px; border-radius:999px; border:0; background:var(--accent); color:#002417; font-weight:800; cursor:pointer}
-    .admin-layout{display:grid; grid-template-columns:320px 1fr; height:100vh}
-    .sidebar{border-right:1px solid var(--line); background:var(--panel); display:flex; flex-direction:column}
-    .brand{padding:14px 16px; font-weight:800; border-bottom:1px solid var(--line)}
-    .search{padding:8px 10px; border-bottom:1px solid var(--line)}
-    .search input{width:100%; padding:10px; border-radius:8px; border:1px solid var(--line); background:#0c1014; color:#e6eef7}
-    .rooms{list-style:none; margin:0; padding:0; overflow-y:auto}
-    .room{padding:12px 14px; border-bottom:1px solid var(--line); cursor:pointer; display:flex; gap:10px; align-items:center}
-    .room:hover{background:#10161d}
-    .room .title{font-weight:700} .room .sub{color:var(--muted); font-size:12px}
-    .badge{background:var(--accent); color:#002417; font-weight:700; padding:0 8px; border-radius:999px; font-size:12px; margin-left:auto}
-    .dot{display:inline-block; width:8px; height:8px; border-radius:50%; background:#666; margin-right:6px; vertical-align:middle}
-    .dot.online{background:#1bd760}
-    #view-user{display:block} #view-admin{display:none}
-    .small{font-size:12px; opacity:.8}
+
+    /* Botões */
+    .btn{
+      appearance:none;border:0;cursor:pointer;
+      background:var(--green);color:var(--white);font-weight:800;
+      padding:10px 16px;border-radius:999px;box-shadow:var(--shadow-2);transition:transform .06s ease,filter .12s;
+    }
+    .btn:hover{filter:brightness(1.04)}
+    .btn:active{transform:translateY(1px)}
+    .btn--pill{padding:6px 12px;font-size:12px}
+    .btn--ghost{background:transparent;border:1px solid #264b3a;color:var(--text)}
+
+    /* Campos */
+    input,select{
+      width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);
+      background:#0c1218;color:var(--text);outline:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.02);
+    }
+
+    /* Cards / containers */
+    .wrap{max-width:980px;margin:0 auto}
+    .login-card{
+      max-width:480px;margin:9vh auto;padding:22px;border:1px solid var(--line);
+      border-radius:var(--radius-xl);background:var(--card);box-shadow:var(--shadow-1)
+    }
+    .login-card h1{margin:0 0 12px}
+    .login-card label{display:block;margin:10px 0 6px;color:var(--muted)}
+
+    /* Chat (User & Operador) */
+    .chat{display:flex;flex-direction:column;height:100vh;max-width:980px;margin:0 auto;position:relative}
+    .chat .hdr{
+      position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:10px;
+      padding:12px 14px;border-bottom:1px solid var(--line);background:var(--panel)
+    }
+    .chat .title{font-weight:900;letter-spacing:.3px}
+    .chat .sub{font-size:12px;color:var(--muted);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .msgs{
+      flex:1;overflow:auto;padding:18px 18px 10px;background:linear-gradient(#0a0f14,#0a0d12)
+    }
+    .msg{
+  display:block;
+  width:fit-content;
+  max-width:75%;
+  margin:8px 0;
+  padding:12px 14px;
+  border-radius:18px;
+  white-space:pre-wrap;
+  word-break:break-word;
+  color:var(--bubble-text);
+  line-height:1.45;
+  clear:both; /* garante empilhamento */
+}
+
+.me{
+  background:var(--bubble-user);
+  border-top-left-radius:8px;
+  margin-left:auto;
+  box-shadow:0 6px 18px #ff8a0015;
+  float:right;
+}
+
+.op{
+  background:var(--bubble-op);
+  border-top-right-radius:8px;
+  margin-right:auto;
+  box-shadow:0 6px 18px #0e6b3f18;
+  float:left;
+}
+    .msg .meta{display:flex;gap:6px;align-items:center;justify-content:flex-end;margin-top:6px;font-size:11px;color:#eaeff6c7}
+    .me{background:var(--bubble-user);border-top-left-radius:8px;margin-left:auto;box-shadow: 0 6px 18px #ff8a0015}
+    .op{background:var(--bubble-op);border-top-right-radius:8px;margin-right:auto;box-shadow: 0 6px 18px #0e6b3f18}
+    .composer{padding:10px 12px;border-top:1px solid var(--line);background:var(--panel)}
+    .composer form{display:flex;gap:10px}
+    .composer input{flex:1}
+    .composer button{min-width:64px}
+
+    /* Overlay de finalizado */
+    .overlay {
+      position:absolute; inset:0; display:none; align-items:center; justify-content:center;
+      backdrop-filter: blur(4px); background: #0006; z-index:6;
+    }
+    .overlay .card { background:var(--card); border:1px solid var(--line); padding:16px 18px; border-radius:var(--radius-xl); font-weight:800 }
+
+    /* Operador layout */
+    .op-layout{display:grid;grid-template-columns:360px 1fr;height:100vh}
+    .sidebar{display:flex;flex-direction:column;background:var(--panel);border-right:1px solid var(--line)}
+    .brand{padding:18px 16px;font-weight:900;border-bottom:1px solid var(--line)}
+    .search{padding:12px;border-bottom:1px solid var(--line)}
+    .list{overflow:auto}
+
+    /* Card da conversa (lista) */
+    .room{
+      display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-bottom:1px solid var(--line);
+      cursor:pointer;transition:background .12s ease;
+    }
+    .room:hover{background:#111821}
+    .room .title{font-weight:800}
+    .room .sub{font-size:12px;color:var(--muted);margin-top:2px}
+    .room .meta-line{
+      display:flex;gap:8px;align-items:center;margin-top:6px;font-size:12px;color:var(--muted)
+    }
+    .wait{margin-left:auto;font-size:12px;color:var(--muted)}
+
+    /* Status pill (online/offline) */
+    .status{
+      display:inline-flex;gap:6px;align-items:center;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;
+    }
+    .status.online{background:var(--status-online-bg);color:var(--status-online-fg)}
+    .status.offline{background:var(--status-offline-bg);color:var(--status-offline-fg)}
+    .status .dot{width:8px;height:8px;border-radius:50%}
+    .status.online .dot{background:var(--status-online-fg)}
+    .status.offline .dot{background:var(--status-offline-fg)}
+
+    /* Badge de alerta */
+    .badge-alert{
+      display:inline-block;padding:2px 8px;border-radius:999px;background:var(--orange);color:#1f1200;
+      font-weight:900;font-size:11px;box-shadow:var(--shadow-2)
+    }
+
+    /* Ticks */
+    .tick{font-size:12px;opacity:.8}
+    .tick.seen{color:var(--white)}
   </style>
 
-  <!-- XLSX para exportar relatório -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.20.2/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
-  <!-- =========== VIEW: USUÁRIO ============ -->
-  <div id="view-user">
-    <div id="app">
-      <section class="login-card" id="loginCard">
-        <h1>Entrar no Chat</h1>
-        <form id="loginForm">
-          <label>Nome</label>
-          <input id="nomeInput" required placeholder="Ex.: Ana" />
-          <label>Contato</label>
-          <input id="contatoInput" required placeholder="Ex.: (11) 9... / email" />
-          <label>Assunto</label>
-          <input id="assuntoInput" required placeholder="Ex.: Dúvida sobre boleto" />
-          <label>Categoria</label>
-          <select id="categoriaSelect" required>
-            <option value="suporte">Suporte TI</option>
-            <option value="operacao">Status</option>
-          </select>
-          <button type="submit">Entrar</button>
+<!-- =========== VIEW: USUÁRIO ============ -->
+<div id="view-user">
+  <div class="wrap">
+    <section class="login-card" id="loginCard">
+      <h1>Falar com o Operador</h1>
+      <form id="loginForm">
+        <label>Seu nome</label>
+        <input id="nomeInput" required placeholder="Ex.: Ana" />
+        <label>Contato</label>
+        <input id="contatoInput" required placeholder="telefone ou email" />
+        <label>Assunto</label>
+        <input id="assuntoInput" required placeholder="Ex.: Dúvida sobre pagamento" />
+        <label>Categoria</label>
+        <select id="categoriaSelect" required>
+          <option value="suporte">Suporte TI</option>
+          <option value="operacao">Operação</option>
+        </select>
+        <button type="submit" class="btn" style="width:100%;margin-top:12px">Entrar no chat</button>
+      </form>
+      <p class="hint" style="color:var(--muted);margin-top:10px">Painel do Operador? <a href="#/operador">Abrir</a></p>
+    </section>
+
+    <section class="chat hidden" id="chatWrap">
+      <header class="hdr">
+        <div>
+          <div class="title" id="chatTitle"></div>
+          <div class="sub">
+            <span id="roomIdSpan"></span>
+            <span id="subOnline" class="status offline"><span class="dot"></span> offline</span>
+            <span id="subTempo"></span>
+          </div>
+        </div>
+        <div class="right" style="display:flex;gap:8px;align-items:center">
+          <button id="btnAlert" class="btn btn--pill" title="tocar alerta no operador">alertar</button>
+          <button id="btnLeave" class="btn btn--pill btn--ghost">desconectar</button>
+        </div>
+      </header>
+
+      <main class="msgs" id="messages"></main>
+      <div id="userOverlay" class="overlay"><div class="card">Chat Finalizado</div></div>
+
+      <footer class="composer">
+        <form id="msgForm">
+          <input id="msgInput" type="text" placeholder="Digite uma mensagem…" autocomplete="off" disabled />
+          <button type="submit" title="Enviar" class="btn">Enviar</button>
         </form>
-        <p class="hint">Seu chat abre com um atendente. O histórico fica salvo para relatório.</p>
-        <p class="hint">Área do atendente? <a class="link" href="#/admin">Abrir painel</a></p>
-      </section>
-
-      <section class="chat-wrap hidden" id="chatWrap">
-        <header class="chat-header">
-          <div>
-            <div class="chat-title" id="chatTitle"></div>
-            <div class="chat-subtitle" id="chatSubtitle"></div>
-          </div>
-          <button class="btn-link" id="btnLeave">sair</button>
-        </header>
-
-        <main class="messages" id="messages"></main>
-
-        <footer class="composer">
-          <form id="msgForm">
-            <input id="msgInput" type="text" placeholder="Digite uma mensagem…" autocomplete="off" disabled />
-            <button type="submit" title="Enviar" disabled>➤</button>
-          </form>
-        </footer>
-      </section>
-    </div>
-
-    <audio id="ding" preload="auto">
-      <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
-    </audio>
+        <div id="typingHint" class="center" style="text-align:center;margin-top:6px;color:var(--muted)"></div>
+      </footer>
+    </section>
   </div>
+  <audio id="ding" preload="auto">
+    <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
+  </audio>
+</div>
 
-  <!-- =========== VIEW: ADMIN ============ -->
-  <div id="view-admin">
-    <div class="admin-layout">
-      <aside class="sidebar">
-        <div class="brand">Painel de Atendentes</div>
-        <div class="search">
-          <form id="admLoginForm">
-            <input id="admEmail" type="email" required placeholder="email do atendente" />
-            <input id="admPass" type="password" required placeholder="senha" />
-            <select id="admGroup">
-              <option value="suporte">Suporte TI</option>
-              <option value="operacao">Operação</option>
-            </select>
-            <button id="admLoginBtn" type="submit">Entrar ADM</button>
-            <button id="admRegister" type="button">Cadastrar</button>
-          </form>
-          <div style="margin-top:8px; display:flex; gap:8px">
-            <button id="btnAvailable" class="btn-link">marcar disponível</button>
-            <button id="admLogout" class="btn-link">sair</button>
+<!-- =========== VIEW: OPERADOR ============ -->
+<div id="view-op" class="hidden">
+  <div class="op-layout">
+    <aside class="sidebar">
+      <div class="brand">Painel do Operador</div>
+      <div class="search">
+        <input id="filterInput" placeholder="filtrar por nome/assunto…" />
+      </div>
+      <div class="list" id="roomsList"></div>
+      <div style="padding:12px;border-top:1px solid var(--line)">
+        <button id="btnExport" class="btn" style="width:100%">Exportar XLSX</button>
+      </div>
+    </aside>
+
+    <section class="op-chat" style="display:flex;flex-direction:column">
+      <header class="hdr">
+        <div>
+          <div class="title" id="roomTitle">Selecione um chat</div>
+          <div class="sub" style="gap:12px">
+            <span id="roomOnlineDot" class="status offline"><span class="dot"></span> offline</span>
+            <span id="roomSub">—</span>
+            <span id="opTyping" style="color:var(--muted)"></span>
           </div>
-          <input id="filterInput" placeholder="filtrar por nome/assunto…" style="margin-top:10px" />
         </div>
-        <ul class="rooms" id="roomsList"></ul>
-        <div style="padding:10px">
-          <button id="btnReport">Exportar XLSX</button>
+        <div class="right" style="display:flex;gap:8px;align-items:center">
+          <span class="btn btn--pill btn--ghost" id="waitBadge">aguardando —</span>
+          <button class="btn btn--pill" id="btnFinish" disabled>finalizar</button>
+          <button class="btn btn--pill btn--ghost" id="btnRegister" disabled>registra</button>
         </div>
-      </aside>
+      </header>
 
-      <section style="display:flex; flex-direction:column">
-        <header class="chat-header">
-          <div>
-            <div class="chat-title" id="roomTitle">Selecione um chat</div>
-            <div class="chat-subtitle"><span id="roomStatusDot" class="dot"></span><span id="roomStatusText">—</span></div>
-          </div>
-          <button id="btnCloseChat" class="btn-link" disabled>finalizar</button>
-        </header>
+      <main class="msgs" id="opMessages"></main>
 
-        <main class="messages" id="adminMessages"></main>
+      <!-- Overlay finalizado com botão apagar -->
+      <div id="opOverlay" class="overlay">
+        <button id="btnOverlayDelete" class="btn">apagar chat</button>
+      </div>
 
-        <footer class="composer">
-          <form id="adminMsgForm">
-            <input id="adminMsgInput" type="text" placeholder="Escreva uma resposta…" autocomplete="off" disabled />
-            <button type="submit" title="Enviar" disabled>➤</button>
-          </form>
-        </footer>
-      </section>
-    </div>
+      <footer class="composer">
+        <form id="opForm">
+          <input id="opInput" type="text" placeholder="Escreva uma resposta…" autocomplete="off" disabled />
+          <button type="submit" title="Enviar" class="btn" disabled>Enviar</button>
+        </form>
+      </footer>
+    </section>
   </div>
+  <audio id="opDing" preload="auto">
+    <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
+  </audio>
+</div>
 
-  <!-- ======= SCRIPTS ======= -->
-  <script type="module" src="./app.js"></script>
-  <script type="module" src="./admin.js"></script>
+<script type="module" src="./app.js"></script>
+<script type="module" src="./operador.js"></script>
 </body>
 </html>
