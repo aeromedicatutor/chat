@@ -10,16 +10,16 @@
       --bubble-adm:#0e5f3b; --text:#e6eef7; --muted:#a7b0bb; --line:#242a32; --accent:#00e29f;
     }
     *{box-sizing:border-box} html,body{height:100%}
-    body{margin:0; background:var(--bg); color:var(--text); font:16px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',Arial}
+    body{margin:0; background:var(--bg); color:var(--text); font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',Arial}
     a.link{color:var(--muted); text-decoration:none} a.link:hover{text-decoration:underline}
     .login-card{max-width:420px; margin:10vh auto; padding:24px; background:var(--card); border:1px solid var(--line); border-radius:12px}
     .login-card h1{margin:0 0 12px} .login-card label{display:block; margin:12px 0 6px; color:var(--muted)}
-    .login-card input{width:100%; padding:12px; border-radius:8px; border:1px solid var(--line); background:#0c1014; color:var(--text)}
-    .login-card button{margin-top:16px; width:100%; padding:12px; border:0; border-radius:8px; background:var(--accent); color:#002417; font-weight:700; cursor:pointer}
+    .login-card input,.login-card select{width:100%; padding:12px; border-radius:8px; border:1px solid var(--line); background:#0c1014; color:var(--text)}
+    .login-card button{margin-top:16px; width:100%; padding:12px; border-radius:10px; border:0; background:var(--accent); color:#002417; font-weight:700; cursor:pointer}
     .hint{color:var(--muted); font-size:14px}
     .hidden{display:none!important}
     .chat-wrap{display:flex; flex-direction:column; height:100vh; max-width:920px; margin:0 auto}
-    .chat-header{display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid var(--line); background:var(--panel); position:sticky; top:0; z-index:10}
+    .chat-header{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 14px; border-bottom:1px solid var(--line); background:var(--panel); position:sticky; top:0; z-index:10}
     .chat-title{font-weight:700} .chat-subtitle{color:var(--muted); font-size:13px}
     .btn-link,.link{background:none; border:0; color:var(--muted); cursor:pointer}
     .messages{flex:1; overflow-y:auto; padding:16px; background:linear-gradient(#0c1116,#0b0e12)}
@@ -29,8 +29,8 @@
     .adm{background:var(--bubble-adm); border-top-right-radius:4px}
     .center{margin:10px auto; text-align:center; color:var(--muted); font-size:12px}
     .composer{border-top:1px solid var(--line); background:var(--panel); padding:10px}
-    .composer form{display:flex; gap:10px}
-    .composer input{flex:1; padding:12px; border-radius:999px; border:1px solid var(--line); background:#0c1014; color:var(--text)}
+    .composer form{display:flex; gap:10px; align-items:center}
+    .composer input[type="text"]{flex:1; padding:12px; border-radius:8px; border:1px solid var(--line); background:#0c1014; color:var(--text)}
     .composer button{padding:0 18px; border-radius:999px; border:0; background:var(--accent); color:#002417; font-weight:800; cursor:pointer}
     .admin-layout{display:grid; grid-template-columns:320px 1fr; height:100vh}
     .sidebar{border-right:1px solid var(--line); background:var(--panel); display:flex; flex-direction:column}
@@ -41,77 +41,55 @@
     .room{padding:12px 14px; border-bottom:1px solid var(--line); cursor:pointer; display:flex; gap:10px; align-items:center}
     .room:hover{background:#10161d}
     .room .title{font-weight:700} .room .sub{color:var(--muted); font-size:12px}
-    .badge{background:var(--accent); color:#002417; font-weight:800; padding:0 8px; border-radius:999px; font-size:12px; margin-left:auto}
+    .badge{background:var(--accent); color:#002417; font-weight:700; padding:0 8px; border-radius:999px; font-size:12px; margin-left:auto}
     .dot{display:inline-block; width:8px; height:8px; border-radius:50%; background:#666; margin-right:6px; vertical-align:middle}
     .dot.online{background:#1bd760}
     #view-user{display:block} #view-admin{display:none}
+    .small{font-size:12px; opacity:.8}
   </style>
+
+  <!-- XLSX para exportar relatório -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.20.2/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
-  <!-- ============ VIEW: USUÁRIO ============ -->
+  <!-- =========== VIEW: USUÁRIO ============ -->
   <div id="view-user">
     <div id="app">
       <section class="login-card" id="loginCard">
-    <h1>Entrar no Chat</h1>
-      <form id="loginForm">
-        <label>Nome</label>
-        <input id="nomeInput" required placeholder="Ex.: Ana" />
-        <label>Setor</label>
-        <input id="setorInput" required placeholder="Ex.: Financeiro" />
-        <label>Assunto</label>
-        <input id="assuntoInput" required placeholder="Ex.: Dúvida sobre boleto" />
-        <button type="submit">Entrar</button>
-      </form>
-        <p class="hint">
-        Seu chat abrirá em tempo real com o administrador.
-        </p>
+        <h1>Entrar no Chat</h1>
+        <form id="loginForm">
+          <label>Nome</label>
+          <input id="nomeInput" required placeholder="Ex.: Ana" />
+          <label>Contato</label>
+          <input id="contatoInput" required placeholder="Ex.: (11) 9... / email" />
+          <label>Assunto</label>
+          <input id="assuntoInput" required placeholder="Ex.: Dúvida sobre boleto" />
+          <label>Categoria</label>
+          <select id="categoriaSelect" required>
+            <option value="suporte">Suporte TI</option>
+            <option value="operacao">Status</option>
+          </select>
+          <button type="submit">Entrar</button>
+        </form>
+        <p class="hint">Seu chat abre com um atendente. É anônimo para você; o histórico fica salvo para relatório.</p>
+        <p class="hint">Área do atendente? <a class="link" href="#/admin">Abrir painel</a></p>
       </section>
 
       <section class="chat-wrap hidden" id="chatWrap">
         <header class="chat-header">
           <div>
-            <div class="chat-title" id="chatTitle">—</div>
-            <div class="chat-subtitle"><span id="statusDot" class="dot"></span><span id="statusText">Conectando…</span></div>
+            <div class="chat-title" id="chatTitle"></div>
+            <div class="chat-subtitle" id="chatSubtitle"></div>
           </div>
-          <button id="sairBtn" class="btn-link">sair</button>
+          <button class="btn-link" id="btnLeave">sair</button>
         </header>
 
-        <main id="messages" class="messages"></main>
+        <main class="messages" id="messages"></main>
 
         <footer class="composer">
           <form id="msgForm">
-            <input id="msgInput" placeholder="Digite sua mensagem" autocomplete="off" />
-            <button type="submit" title="Enviar">➤</button>
-          </form>
-        </footer>
-      </section>
-    </div>
-  </div>
-
-  <!-- ============ VIEW: ADM ============ -->
-  <div id="view-admin">
-    <div class="admin-layout">
-      <aside class="sidebar">
-        <div class="brand">Painel do ADM</div>
-        <div class="search"><input id="filterInput" placeholder="Filtrar por nome/setor" /></div>
-        <ul id="roomsList" class="rooms"></ul>
-      </aside>
-
-      <section class="chat-area">
-        <header class="chat-header">
-          <div>
-            <div class="chat-title" id="roomTitle">Selecione uma conversa</div>
-            <div class="chat-subtitle"><span id="roomStatusDot" class="dot"></span><span id="roomStatusText"></span></div>
-          </div>
-          <a class="link" href="#/user">← Voltar ao usuário</a>
-        </header>
-
-        <main id="adminMessages" class="messages"></main>
-
-        <footer class="composer">
-          <form id="adminMsgForm">
-            <input id="adminMsgInput" placeholder="Escreva uma resposta…" autocomplete="off" disabled />
+            <input id="msgInput" type="text" placeholder="Digite uma mensagem…" autocomplete="off" disabled />
             <button type="submit" title="Enviar" disabled>➤</button>
           </form>
         </footer>
@@ -123,356 +101,417 @@
     </audio>
   </div>
 
-  <!-- ====================== SCRIPTS ====================== -->
-<script type="module">
-  // ===== Imports Firebase =====
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-  import { getDatabase, ref, onChildAdded, push, set, serverTimestamp, onDisconnect, onValue, update, get, child } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
-  import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-  import { getStorage, ref as sref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
-  import { firebaseConfig } from "./firebase-config.js";
+  <!-- =========== VIEW: ADMIN ============ -->
+  <div id="view-admin">
+    <div class="admin-layout">
+      <aside class="sidebar">
+        <div class="brand">Painel de Atendentes</div>
+        <div class="search">
+          <form id="admLoginForm">
+            <input id="admEmail" placeholder="email do atendente" />
+            <input id="admPass" type="password" placeholder="senha" />
+            <select id="admGroup">
+              <option value="suporte">Suporte TI</option>
+              <option value="operacao">Operação</option>
+            </select>
+            <button type="submit">Entrar ADM</button>
+            <button type="button" id="admRegister">Cadastrar</button>
+          </form>
+          <div style="margin-top:8px; display:flex; gap:8px">
+            <button id="btnAvailable" class="btn-link">marcar disponível</button>
+            <button id="admLogout" class="btn-link">sair</button>
+          </div>
+          <input id="filterInput" placeholder="filtrar por nome/assunto…" style="margin-top:10px" />
+        </div>
+        <ul class="rooms" id="roomsList"></ul>
+        <div style="padding:10px">
+          <button id="btnReport">Exportar XLSX</button>
+        </div>
+      </aside>
 
-  // ===== Firebase init & Auth anônimo =====
-  const app = initializeApp(firebaseConfig);
-  const db  = getDatabase(app);
-  const auth = getAuth(app);
-  const storage = getStorage(app);
+      <section style="display:flex; flex-direction:column">
+        <header class="chat-header">
+          <div>
+            <div class="chat-title" id="roomTitle">Selecione um chat</div>
+            <div class="chat-subtitle"><span id="roomStatusDot" class="dot"></span><span id="roomStatusText">—</span></div>
+          </div>
+          <button id="btnCloseChat" class="btn-link" disabled>finalizar</button>
+        </header>
 
-  // ===== Helpers & DOM =====
-  const $ = s => document.querySelector(s);
-  const fmt = ts => new Date(Number(ts||Date.now())).toLocaleString();
-  const esc = s => String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-  const slug = s => s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+        <main class="messages" id="adminMessages"></main>
 
-  // user
-  const loginCard=$('#loginCard'), chatWrap=$('#chatWrap');
-  const loginForm=$('#loginForm'), nomeInput=$('#nomeInput'), setorInput=$('#setorInput'), assuntoInput=$('#assuntoInput');
-  const chatTitle=$('#chatTitle'), messagesEl=$('#messages'), msgForm=$('#msgForm'), msgInput=$('#msgInput');
-  const statusDot=$('#statusDot'), statusText=$('#statusText'), sairBtn=$('#sairBtn');
+        <footer class="composer">
+          <form id="adminMsgForm">
+            <input id="adminMsgInput" type="text" placeholder="Escreva uma resposta…" autocomplete="off" disabled />
+            <button type="submit" title="Enviar" disabled>➤</button>
+          </form>
+        </footer>
+      </section>
+    </div>
+  </div>
 
-  // adm
-  const roomsList=$('#roomsList'), filterInput=$('#filterInput'), adminMessages=$('#adminMessages');
-  const roomTitle=$('#roomTitle'), roomStatusDot=$('#roomStatusDot'), roomStatusText=$('#roomStatusText');
-  const adminMsgForm=$('#adminMsgForm'), adminMsgInput=$('#adminMsgInput'), ding=$('#ding');
+  <!-- ======= SCRIPTS ======= -->
+  <script type="module">
+    // ---------- IMPORTS FIREBASE ----------
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import {
+      getDatabase, ref, onChildAdded, push, set, serverTimestamp,
+      onDisconnect, onValue, update, get
+    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+    import {
+      getAuth, signInAnonymously, onAuthStateChanged,
+      signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut
+    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { firebaseConfig } from "./firebase-config.js";
 
-  // estado
-  let roomId=null, userLabel=null, roomRef=null, msgsRef=null, assunto=null;
-  let currentRoomId=null, currentMsgsRef=null;
+    // ---------- APP ----------
+    const app = initializeApp(firebaseConfig);
+    const db  = getDatabase(app);
+    const auth= getAuth(app);
 
-  function openChatUI(nome,setor){
-    loginCard.classList.add('hidden'); chatWrap.classList.remove('hidden');
-    chatTitle.textContent = `${nome} • ${setor} — ${assunto}`;
-  }
-  function resetUserView(){ loginCard.classList.remove('hidden'); chatWrap.classList.add('hidden'); }
-  function scroll(el){ el.scrollTop = el.scrollHeight; }
+    // ---------- QS ----------
+    const $=s=>document.querySelector(s);
+    const $$=s=>document.querySelectorAll(s);
 
-  // ====== TIPING INDICATOR ======
-  function setTyping(roomId, who, val){
-    const p = ref(db, `chats/${roomId}/status/typing/${who}`);
-    set(p, !!val); onDisconnect(p).set(false);
-  }
-  function listenTyping(roomId, whoIsOther, targetEl){
-    onValue(ref(db, `chats/${roomId}/status/typing/${whoIsOther}`), s=>{
-      const v = !!s.val();
-      let tip = document.getElementById('typingHint');
-      if(!tip){ tip=document.createElement('div'); tip.id='typingHint'; tip.className='center'; targetEl.appendChild(tip); }
-      tip.textContent = v ? (whoIsOther==='admin' ? 'ADM está digitando…' : 'Usuário está digitando…') : '';
-    });
-  }
+    // roteamento simples
+    function resolve(){
+      const r = location.hash.replace('#/','');
+      const isAdm = r==='admin';
+      $('#view-user').style.display = isAdm?'none':'block';
+      $('#view-admin').style.display= isAdm?'block':'none';
+    }
+    window.addEventListener('hashchange', resolve); resolve();
 
-  // ====== DELIVERY / SEEN ======
-  function markSeenIfToUser(messageKey){
-    // chamado no lado Usuário quando recebe msg destinada a "Usuário"
-    update(ref(db, `chats/${roomId}/messages/${messageKey}`), { readAt: serverTimestamp() });
-  }
-  function markSeenIfToAdmin(roomId, messageKey){
-    update(ref(db, `chats/${roomId}/messages/${messageKey}`), { readAt: serverTimestamp() });
-  }
+    // ========= ESTADO =========
+    let roomId = null, userLabel = null, roomRef = null, msgsRef = null, assunto = null, categoria=null;
+    let currentRoomId = null, currentMsgsRef = null;
+    let isAgent = false, agentUid = null, agentGroup = 'suporte';
 
-  // ====== USER SIDE ======
-  function attachRoom(nome,setor){
-    roomRef = ref(db, `chats/${roomId}`);
-    msgsRef = ref(db, `chats/${roomId}/messages`);
+    function scroll(el){ el.scrollTop = el.scrollHeight; }
+    function esc(s){ return String(s||'').replace(/[&<>"]/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c])); }
+    const slug = s => (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
 
-    update(roomRef, {
-      userLabel,
-      assunto,
-      createdAt: serverTimestamp(),
-      lastSeenUser: serverTimestamp(),
-      status: { closed:false, userOnline:true, adminOnline:false, typing:{user:false, admin:false} }
-    });
-
-    const presenceRef = ref(db, `chats/${roomId}/status/userOnline`);
-    const lastSeenRef = ref(db, `chats/${roomId}/status/userLastSeen`);
-    set(presenceRef, true); onDisconnect(presenceRef).set(false); onDisconnect(lastSeenRef).set(serverTimestamp());
-
-    // ADM online?
-    onValue(ref(db, `chats/${roomId}/status/adminOnline`), snap=>{
-      const online = !!snap.val();
-      statusDot.classList.toggle('online', online);
-      statusText.textContent = online ? 'ADM online' : 'ADM offline';
-    });
-
-    // typing do ADM
-    listenTyping(roomId, 'admin', messagesEl);
-
-    // stream de mensagens (lado usuário)
-    messagesEl.innerHTML = `<div class="center">Chat aberto. Fale com o ADM.</div>`;
-    onChildAdded(msgsRef, ss=>{
-      const k = ss.key;
-      const m = ss.val();
-      const isAdmToUser = m.destinatario === 'Usuário';
-      const b = document.createElement('div');
-      b.className = `msg ${isAdmToUser ? 'adm':'me'}`;
-
-      if(m.type === 'image'){
-        b.innerHTML = `<a class="link" href="${esc(m.url)}" target="_blank">[imagem]</a><span class="time">${fmt(m.timestamp)} ${m.readAt?'• Lido':''}</span>`;
-      }else{
-        b.innerHTML = `${esc(m.texto)}<span class="time">${fmt(m.timestamp)} ${m.readAt?'• Lido':''}</span>`;
-      }
-
-      messagesEl.appendChild(b);
-      scroll(messagesEl);
-
-      // se recebi algo pra mim, marco como lido
-      if(isAdmToUser){ markSeenIfToUser(k); }
-    });
-  }
-
-  // load local
-  function loadFromLocal(){
-    try{
-      const saved = JSON.parse(localStorage.getItem('chatUser')||'null');
-      if(saved && saved.roomId && saved.userLabel && saved.nome && saved.setor && saved.assunto){
-        ({ roomId, userLabel, assunto } = saved);
-        openChatUI(saved.nome, saved.setor);
-        attachRoom(saved.nome, saved.setor);
-      } else { resetUserView(); }
-    }catch{ resetUserView(); }
-  }
-
-  // ====== ADM SIDE ======
-  function renderRoomLi(id, data){
-    const li = document.createElement('li'); li.className='room'; li.dataset.id=id;
-    const title = document.createElement('div'); title.className='title';
-    title.textContent = (data.userLabel||id) + (data.assunto?` • ${data.assunto}`:'');
-    const sub = document.createElement('div'); sub.className='sub';
-    sub.textContent = data.lastMessage ? `${data.lastMessage} • ${new Date(data.lastMessageAt||Date.now()).toLocaleTimeString()}` : 'Sem mensagens';
-    const badge = document.createElement('span'); badge.className='badge'; badge.textContent='0'; badge.style.display='none';
-    li.append(title, sub, badge); li.addEventListener('click', ()=> openRoom(id)); return li;
-  }
-  function incBadge(li){ const b=li.querySelector('.badge'); b.textContent=String(Number(b.textContent||'0')+1); b.style.display='inline-block'; }
-  function clrBadge(li){ const b=li.querySelector('.badge'); if(b){ b.textContent='0'; b.style.display='none'; } }
-
-  async function openRoom(id){
-    currentRoomId = id; adminMessages.innerHTML=''; roomTitle.textContent='Carregando...';
-    adminMsgInput.disabled=true; adminMsgForm.querySelector('button').disabled=true;
-
-    const roomSnap = await get(child(ref(db), `chats/${id}`));
-    const data = roomSnap.val()||{};
-    roomTitle.textContent = (data.userLabel||id) + (data.assunto?` • ${data.assunto}`:'');
-
-    // status & typing do usuário
-    onValue(ref(db, `chats/${id}/status`), s=>{
-      const st=s.val()||{};
-      roomStatusDot.classList.toggle('online', !!st.userOnline);
-      roomStatusText.textContent = st.userOnline ? 'Usuário online' : (st.userLastSeen ? `Último acesso: ${fmt(st.userLastSeen)}` : 'Usuário offline');
-
-      // "está digitando"
-      let tip=document.getElementById('admTyping');
-      if(!tip){ tip=document.createElement('div'); tip.id='admTyping'; tip.className='center'; adminMessages.appendChild(tip); }
-      tip.textContent = st.typing && st.typing.user ? 'Usuário está digitando…' : '';
-    });
-
-    // limpar badge
-    const li=[...roomsList.children].find(x=>x.dataset.id===id); if(li) clrBadge(li);
-
-    // me marca online
-    update(ref(db, `chats/${id}/status`), { adminOnline:true, adminLastSeen:serverTimestamp() });
-
-    // stream de mensagens (lado ADM)
-    const mref = ref(db, `chats/${id}/messages`); currentMsgsRef=mref;
-    onChildAdded(mref, ss=>{
-      const k=ss.key, m=ss.val(); const toUser = m.destinatario==='Usuário';
-      const b=document.createElement('div'); b.className=`msg ${toUser?'adm':'me'}`;
-
-      if(m.type==='image'){
-        b.innerHTML = `<a class="link" href="${esc(m.url)}" target="_blank">[imagem]</a><span class="time">${fmt(m.timestamp)} ${m.readAt?'• Lido':''}</span>`;
-      }else{
-        b.innerHTML = `${esc(m.texto)}<span class="time">${fmt(m.timestamp)} ${m.readAt?'• Lido':''}</span>`;
-      }
-
-      adminMessages.appendChild(b); scroll(adminMessages);
-
-      // se recebi algo para ADM, marcar como lido
-      if(m.destinatario==='ADM'){ markSeenIfToAdmin(id, k); }
-    });
-
-    // habilita composer (desabilita se fechado)
-    const closed = (data.status && data.status.closed) || false;
-    adminMsgInput.disabled = closed; adminMsgForm.querySelector('button').disabled = closed;
-  }
-
-  // ====== Inicialização após Auth ======
-  onAuthStateChanged(auth, async (user)=>{
-    if(!user){ try{ await signInAnonymously(auth); }catch(e){ console.error('auth anon failed', e); } return; }
-
-    // USER FLOW
-    (function initUser(){
-      loadFromLocal();
-
-      if(loginForm){
-        loginForm.addEventListener('submit', e=>{
-          e.preventDefault();
-          const nome=nomeInput.value.trim(), setor=setorInput.value.trim();
-          assunto = assuntoInput.value.trim();
-          if(!nome || !setor || !assunto) return;
-
-          roomId = `${slug(nome)}-${slug(setor)}-${Date.now()}`;
-          userLabel = `${nome} (${setor})`;
-          localStorage.setItem('chatUser', JSON.stringify({ nome,setor,assunto, roomId,userLabel }));
-          openChatUI(nome,setor);
-          attachRoom(nome,setor);
-        });
-      }
-
-      if(msgForm){
-        msgForm.addEventListener('submit', async e=>{
-          e.preventDefault(); if(!msgsRef) return;
-          const text = msgInput.value.trim(); if(!text) return;
-          const res = await push(msgsRef, { autor:userLabel, texto:text, timestamp:Date.now(), destinatario:"ADM" });
-          // delivered
-          await update(ref(db, `chats/${roomId}/messages/${res.key}`), { deliveredAt: serverTimestamp() });
-          await update(roomRef, { lastMessage:text, lastMessageAt:serverTimestamp(), lastMessageDest:"ADM", lastSeenUser:serverTimestamp() });
-          msgInput.value=""; scroll(messagesEl);
-        });
-
-        // typing
-        msgInput.addEventListener('input', ()=> setTyping(roomId, 'user', msgInput.value.trim().length>0));
-        msgInput.addEventListener('blur',  ()=> setTyping(roomId, 'user', false));
-      }
-
-      if(sairBtn){
-        sairBtn.addEventListener('click', ()=>{
-          if(roomId){
-            set(ref(db, `chats/${roomId}/status/userOnline`), false);
-            set(ref(db, `chats/${roomId}/status/userLastSeen`), Date.now());
-          }
-          localStorage.removeItem('chatUser'); window.location.reload();
-        });
-      }
-    })();
-
-    // ADM FLOW
-    (function initAdmin(){
-      if(!roomsList) return;
-
-      onChildAdded(ref(db, 'chats'), (snap)=>{
-        const id=snap.key, data=snap.val()||{};
-        const li = renderRoomLi(id,data); roomsList.appendChild(li);
-
-        // atualizações
-        onValue(ref(db, `chats/${id}`), s=>{
-          const d=s.val()||{};
-          li.querySelector('.sub').textContent = d.lastMessage ? `${d.lastMessage} • ${new Date(d.lastMessageAt||Date.now()).toLocaleTimeString()}` : 'Sem mensagens';
-          if(currentRoomId!==id && d.lastMessage && d.lastMessageDest==="ADM"){ incBadge(li); try{ ding.currentTime=0; ding.play(); }catch{} }
-        });
-      });
-
-      if(filterInput){
-        filterInput.addEventListener('input', ()=>{
-          const q=filterInput.value.toLowerCase();
-          [...roomsList.children].forEach(li=>{
-            const t=(li.querySelector('.title').textContent+' '+li.querySelector('.sub').textContent).toLowerCase();
-            li.style.display = t.includes(q)?'':'none';
-          });
-        });
-      }
-
-      // enviar do ADM
-      adminMsgForm.addEventListener('submit', async e=>{
-        e.preventDefault();
-        const text=adminMsgInput.value.trim();
-        if(!text || !currentRoomId || !currentMsgsRef) return;
-        const res = await push(currentMsgsRef, { autor:"ADM", texto:text, timestamp:Date.now(), destinatario:"Usuário" });
-        await update(ref(db, `chats/${currentRoomId}/messages/${res.key}`), { deliveredAt: serverTimestamp() });
-        await update(ref(db, `chats/${currentRoomId}`), { lastMessage:text, lastMessageAt:serverTimestamp(), lastMessageDest:"Usuário", "status/adminLastSeen":serverTimestamp() });
-        adminMsgInput.value=''; scroll(adminMessages);
-      });
-
-      // typing ADM
-      adminMsgInput.addEventListener('input', ()=>{
-        if(!currentRoomId) return; setTyping(currentRoomId, 'admin', adminMsgInput.value.trim().length>0);
-      });
-      adminMsgInput.addEventListener('blur', ()=>{ if(currentRoomId) setTyping(currentRoomId, 'admin', false); });
-
-      // finalizar atendimento (atalho: Ctrl+Enter no ADM zera/fecha sala)
-      window.addEventListener('keydown', async (e)=>{
-        if(e.ctrlKey && e.key==='Enter' && currentRoomId){
-          await update(ref(db, `chats/${currentRoomId}/status`), { closed:true });
-          adminMsgInput.disabled = true; adminMsgForm.querySelector('button').disabled = true;
-          // envia aviso
-          push(currentMsgsRef, { autor:"Sistema", texto:"Atendimento finalizado pelo ADM.", timestamp:Date.now(), destinatario:"Usuário" });
-        }
-      });
-
-      // marcar ADM offline ao sair
-      window.addEventListener('beforeunload', ()=>{
-        if(currentRoomId){
-          update(ref(db, `chats/${currentRoomId}/status`), { adminOnline:false, adminLastSeen:serverTimestamp() });
-        }
-      });
-    })();
-  });
-
-  // ===== AVALIAÇÃO (User) – aparece quando sala fechada =====
-  onValue(ref(db, `chats`), s=>{
-    // mostra formulário de avaliação para a sala local do usuário, se fechada e sem rating
-    const saved = JSON.parse(localStorage.getItem('chatUser')||'null');
-    if(!saved) return;
-    const r = s.child(saved.roomId); if(!r.exists()) return;
-    const val = r.val();
-    if(val?.status?.closed && !val?.rating && document.getElementById('rateForm')==null){
-      const box=document.createElement('div'); box.id='rateForm'; box.className='login-card'; box.style.margin='16px';
-      box.innerHTML=`
-        <h3>Como foi seu atendimento?</h3>
-        <form id="ratingForm">
-          <label>Nota (1 a 5)</label>
-          <input id="ratingInput" type="number" min="1" max="5" required />
-          <label>Comentário (opcional)</label>
-          <input id="ratingComment" placeholder="Deixe seu feedback" />
-          <button type="submit">Enviar avaliação</button>
-        </form>`;
-      (chatWrap||document.body).appendChild(box);
-      $('#ratingForm').addEventListener('submit', async e=>{
-        e.preventDefault();
-        const nota = Number($('#ratingInput').value);
-        const comt = $('#ratingComment').value.trim();
-        await update(ref(db, `chats/${saved.roomId}`), { rating:{ score:nota, comment:comt, at:serverTimestamp() } });
-        box.remove();
+    // ========= TYPING =========
+    function setTyping(roomId, who, val){
+      const p = ref(db, `chats/${roomId}/status/typing/${who}`);
+      set(p, !!val); onDisconnect(p).set(false);
+    }
+    function listenTyping(roomId, whoIsOther, targetEl, id='typingHint'){
+      onValue(ref(db, `chats/${roomId}/status/typing/${whoIsOther}`), s=>{
+        const v = !!s.val();
+        let tip = document.getElementById(id);
+        if(!tip){ tip=document.createElement('div'); tip.id=id; tip.className='center'; targetEl.appendChild(tip); }
+        tip.textContent = v ? (whoIsOther==='admin' ? 'ADM está digitando…' : 'Usuário está digitando…') : '';
       });
     }
-  });
 
-  // ===== Upload de imagem (User) – opcional, 5MB máx (auto-apagar precisa Function) =====
-  // Exemplo rápido: você pode adicionar um input file no HTML e chamar esta função:
-  async function sendImage(file){
-    if(!msgsRef || !file) return;
-    if(file.size > 5*1024*1024){ alert('Máx 5MB'); return; }
-    const p = sref(storage, `uploads/${roomId}/${Date.now()}-${file.name}`);
-    await uploadBytes(p, file);
-    const url = await getDownloadURL(p);
-    const res = await push(msgsRef, { type:'image', url, timestamp:Date.now(), destinatario:'ADM', autor:userLabel });
-    await update(ref(db, `chats/${roomId}/messages/${res.key}`), { deliveredAt: serverTimestamp() });
-    // Para apagar em 5 min: usar Cloud Function (abaixo)
-  }
+    // ========= DELIVERY / SEEN =========
+    function markSeen(room, key){ update(ref(db, `chats/${room}/messages/${key}`), { readAt: serverTimestamp() }); }
 
-  // Logs globais
-  window.addEventListener('error', e=>console.error('[error]', e.message));
-  window.addEventListener('unhandledrejection', e=>console.error('[promise]', e.reason));
-</script>
+    // ========= USER SIDE =========
+    const loginCard = $('#loginCard'), chatWrap = $('#chatWrap'), chatTitle = $('#chatTitle'), chatSubtitle = $('#chatSubtitle');
+    const nomeInput=$('#nomeInput'), contatoInput=$('#contatoInput'), assuntoInput=$('#assuntoInput'), categoriaSelect=$('#categoriaSelect');
+    const msgForm = $('#msgForm'), msgInput = $('#msgInput'), messages = $('#messages'), btnLeave=$('#btnLeave');
+
+    function openChatUI(nome, catLabel){
+      loginCard.classList.add('hidden'); chatWrap.classList.remove('hidden');
+      chatTitle.textContent = `${nome} • ${catLabel} — ${assunto}`;
+      chatSubtitle.textContent = 'Conectado';
+    }
+
+    async function assignAgent(room, categoria){ // "suporte"|"operacao"
+      const snap = await get(ref(db, 'agents'));
+      const all  = snap.val() || {};
+      const pool = Object.entries(all)
+        .filter(([uid, a]) => a && a.available && a.group === categoria)
+        .map(([uid, a]) => ({ uid, name: a.name || 'Agente' }));
+
+      if(pool.length === 0){
+        await update(ref(db, `chats/${room}`), { status: { queue: true } });
+        return;
+      }
+
+      // Menor carga: conta quantos chats abertos cada um tem
+      const chatsSnap = await get(ref(db, 'chats'));
+      const chats = chatsSnap.val() || {};
+      const counts = {}; pool.forEach(p=>counts[p.uid]=0);
+      Object.values(chats).forEach(c=>{
+        if(c?.assignedTo?.uid && counts.hasOwnProperty(c.assignedTo.uid) && !c?.status?.closed){
+          counts[c.assignedTo.uid]++;
+        }
+      });
+      pool.sort((a,b)=> (counts[a.uid]||0)-(counts[b.uid]||0));
+      const chosen = pool[0];
+
+      await update(ref(db, `chats/${room}`), {
+        assignedTo: { uid: chosen.uid, name: chosen.name, group: categoria },
+        status: { queue: false, closed:false }
+      });
+    }
+
+    function attachRoom(nome, categoriaVal, contato){
+      roomRef = ref(db, `chats/${roomId}`);
+      msgsRef = ref(db, `chats/${roomId}/messages`);
+
+      update(roomRef, {
+        userLabel,
+        assunto,
+        createdAt: serverTimestamp(),
+        sessionUid: auth.currentUser?.uid || null,
+        status: { closed:false, queue:true, userOnline:true, adminOnline:false, typing:{user:false, admin:false} },
+        userInfo: { nome, contato, categoria: categoriaVal }
+      });
+
+      const presenceRef = ref(db, `chats/${roomId}/status/userOnline`);
+      const lastSeenRef = ref(db, `chats/${roomId}/status/userLastSeen`);
+      set(presenceRef, true); onDisconnect(presenceRef).set(false); onDisconnect(lastSeenRef).set(serverTimestamp());
+
+      assignAgent(roomId, categoriaVal).catch(console.error);
+
+      onChildAdded(msgsRef, (s)=>{
+        const k = s.key, m = s.val(); const div = document.createElement('div');
+        const mine = m.autorRole==='user';
+        div.className = `msg ${mine?'me':'adm'}`;
+        div.innerHTML = `
+          ${m.autorRole==='agent' ? `<div class="small">${esc(m.autorName||'Agente')}</div>` : ''}
+          ${esc(m.texto||'')}
+          <span class="time">${new Date(m.timestamp||Date.now()).toLocaleTimeString()} ${m.readAt?'• Lido':''}</span>`;
+        messages.appendChild(div); scroll(messages);
+        if(!mine) markSeen(roomId, k);
+        if(!mine) $('#ding').play().catch(()=>{});
+      });
+
+      listenTyping(roomId, 'admin', messages);
+      msgInput.disabled=false; msgForm.querySelector('button').disabled=false;
+    }
+
+    $('#loginForm').addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const nome = nomeInput.value.trim();
+      const contato = contatoInput.value.trim();
+      assunto = assuntoInput.value.trim();
+      categoria = categoriaSelect.value; // "suporte" | "operacao"
+      if(!nome || !contato || !assunto) return;
+
+      await signInAnonymously(auth); // sessão anônima para o usuário
+      roomId   = `${slug(nome)}-${Date.now()}`;
+      userLabel= nome;
+
+      localStorage.setItem('chatUser', JSON.stringify({ nome, contato, assunto, categoria, roomId, userLabel }));
+      openChatUI(nome, categoria==='suporte'?'Suporte TI':'Status');
+      attachRoom(nome, categoria, contato);
+    });
+
+    msgInput.addEventListener('input', ()=> setTyping(roomId, 'user', !!msgInput.value));
+    msgForm.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const text = msgInput.value.trim(); if(!text) return;
+      await push(msgsRef, {
+        autorUid: auth.currentUser?.uid || null,
+        autorName: userLabel,
+        autorRole: 'user',
+        texto: text,
+        timestamp: Date.now(),
+        destinatario: "ADM"
+      });
+      msgInput.value=''; setTyping(roomId, 'user', false);
+    });
+
+    btnLeave.addEventListener('click', async ()=>{
+      // usuário só sai; não fecha o chat
+      chatSubtitle.textContent = 'Desconectado';
+      try{ await signOut(auth); }catch(e){}
+      location.reload();
+    });
+
+    // ========= ADMIN SIDE =========
+    const roomsList=$('#roomsList'), filterInput=$('#filterInput'), adminMessages=$('#adminMessages');
+    const roomTitle=$('#roomTitle'), roomStatusDot=$('#roomStatusDot'), roomStatusText=$('#roomStatusText');
+    const adminMsgForm=$('#adminMsgForm'), adminMsgInput=$('#adminMsgInput');
+    const btnReport=$('#btnReport'), btnCloseChat=$('#btnCloseChat');
+    const admLoginForm=$('#admLoginForm'), admEmail=$('#admEmail'), admPass=$('#admPass'), admGroup=$('#admGroup');
+    const admRegisterBtn=$('#admRegister'), btnAvailable=$('#btnAvailable'), admLogout=$('#admLogout');
+
+    admRegisterBtn?.addEventListener('click', async ()=>{
+      try{
+        const { user } = await createUserWithEmailAndPassword(auth, admEmail.value.trim(), admPass.value);
+        const group = admGroup.value || 'suporte';
+        await update(ref(db, `roles/${user.uid}`), { group, isAdmin:true, name: admEmail.value.trim() });
+        await update(ref(db, `agents/${user.uid}`), { name:user.email, group, available:false, online:false, lastSeen: serverTimestamp() });
+        alert('Agente cadastrado!');
+      }catch(e){ alert('Falha no cadastro'); console.error(e); }
+    });
+
+    admLoginForm?.addEventListener('submit', async e=>{
+      e.preventDefault();
+      try{
+        const { user } = await signInWithEmailAndPassword(auth, admEmail.value.trim(), admPass.value);
+        isAgent = true; agentUid = user.uid;
+        const roleSnap = await get(ref(db, `roles/${user.uid}`));
+        const role = roleSnap.val() || { group: admGroup.value || 'suporte' };
+        agentGroup = role.group || 'suporte';
+        await update(ref(db, `agents/${user.uid}`), { name:user.email, group:agentGroup, available:false, online:true, lastSeen: serverTimestamp() });
+        initAdmin();
+      }catch(err){ alert('Falha no login ADM'); console.error(err); }
+    });
+
+    btnAvailable?.addEventListener('click', async ()=>{
+      if(!agentUid) return;
+      const agRef = ref(db, `agents/${agentUid}`);
+      const snap = await get(agRef); const cur = snap.val()||{};
+      await update(agRef, { available: !cur.available, online:true, lastSeen: serverTimestamp() });
+      btnAvailable.textContent = (cur.available?'marcar disponível':'marcar indisponível');
+    });
+
+    admLogout?.addEventListener('click', async ()=>{
+      try{
+        if(agentUid) await update(ref(db, `agents/${agentUid}`), { online:false, available:false, lastSeen: serverTimestamp() });
+        await signOut(auth);
+      }catch(e){}
+      location.reload();
+    });
+
+    function initAdmin(){
+      // lista salas; mostra apenas as atribuídas ao agente
+      onValue(ref(db, 'chats'), s=>{
+        const data = s.val()||{};
+        roomsList.innerHTML='';
+        Object.entries(data).forEach(([id, c])=>{
+          if(c.assignedTo?.uid !== agentUid) return; // só minhas
+          const li = document.createElement('li'); li.className='room'; li.dataset.id=id;
+          const icon = document.createElement('span'); icon.className='dot '+(c.status?.userOnline?'online':''); li.appendChild(icon);
+          const body = document.createElement('div'); body.style.flex='1';
+          const title = document.createElement('div'); title.className='title'; title.textContent = (c.userLabel||id)+' • '+(c.assunto||'');
+          const sub = document.createElement('div'); sub.className='sub'; sub.textContent = c.lastMessage ? `${c.lastMessage} • ${new Date(c.lastMessageAt||Date.now()).toLocaleTimeString()}` : 'Sem mensagens';
+          body.appendChild(title); body.appendChild(sub); li.appendChild(body);
+          const badge = document.createElement('span'); badge.className='badge'; badge.style.display='none'; li.appendChild(badge);
+          li.addEventListener('click', ()=> openRoom(id));
+          roomsList.appendChild(li);
+        });
+      });
+    }
+
+    async function openRoom(id){
+      currentRoomId = id;
+      roomTitle.textContent = id;
+      adminMessages.innerHTML='';
+      currentMsgsRef = ref(db, `chats/${id}/messages`);
+
+      onValue(ref(db, `chats/${id}/status/userOnline`), s=>{
+        const online = !!s.val(); roomStatusDot.classList.toggle('online', online);
+        roomStatusText.textContent = online ? 'Usuário online' : 'Usuário offline';
+      });
+
+      onChildAdded(currentMsgsRef, (s)=>{
+        const k = s.key, m = s.val(); const div = document.createElement('div');
+        const mine = m.autorRole==='agent' && m.autorUid===agentUid;
+        div.className = `msg ${mine?'me':'adm'}`;
+        div.innerHTML = `
+          ${m.autorRole==='agent' ? `<div class="small">${esc(m.autorName||'Agente')}</div>` : ''}
+          ${esc(m.texto||'')}
+          <span class="time">${new Date(m.timestamp||Date.now()).toLocaleTimeString()} ${m.readAt?'• Lido':''}</span>`;
+        adminMessages.appendChild(div); scroll(adminMessages);
+        if(m.autorRole==='user') markSeen(id, k);
+      });
+
+      listenTyping(id, 'user', adminMessages, 'typingHintAdmin');
+
+      adminMsgInput.disabled=false; adminMsgForm.querySelector('button').disabled=false;
+      btnCloseChat.disabled=false;
+    }
+
+    adminMsgInput.addEventListener('input', ()=> currentRoomId && setTyping(currentRoomId, 'admin', !!adminMsgInput.value));
+    adminMsgForm.addEventListener('submit', async (e)=>{
+      e.preventDefault(); if(!currentMsgsRef) return;
+      const text = adminMsgInput.value.trim(); if(!text) return;
+      const autorName = (auth.currentUser?.email) || 'Agente';
+      await push(currentMsgsRef, {
+        autorUid: auth.currentUser?.uid || null,
+        autorName,
+        autorRole: 'agent',
+        texto: text,
+        timestamp: Date.now(),
+        destinatario: "Usuário"
+      });
+      adminMsgInput.value=''; setTyping(currentRoomId, 'admin', false);
+    });
+
+    // relatório XLSX
+    btnReport?.addEventListener('click', async ()=>{
+      const snap = await get(ref(db, 'chats'));
+      const all = snap.val() || {};
+      const rows = [["Nome ADM","Nome user","Assunto","Grupo","Avaliação","RoomId","Data"]];
+      Object.entries(all).forEach(([rid, c])=>{
+        if (isAgent && agentUid && c.assignedTo?.uid !== agentUid) return;
+        rows.push([
+          c.assignedTo?.name || '',
+          c.userLabel || '',
+          c.assunto || '',
+          c.assignedTo?.group || '',
+          c.rating?.score || '',
+          rid,
+          new Date(c.createdAt || Date.now()).toISOString()
+        ]);
+      });
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Chats");
+      const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+      const blob = new Blob([wbout], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'relatorio_chats.xlsx'; a.click();
+      URL.revokeObjectURL(a.href);
+    });
+
+    // fechar chat (somente ADM atribuído)
+    btnCloseChat?.addEventListener('click', async ()=>{
+      if(!currentRoomId) return;
+      await update(ref(db, `chats/${currentRoomId}/status`), { closed:true });
+      await push(currentMsgsRef, { autorName:"Sistema", autorRole:"agent", texto:"Atendimento finalizado pelo ADM.", timestamp:Date.now(), destinatario:"Usuário" });
+    });
+    window.addEventListener('keydown', async (e)=>{
+      if(e.ctrlKey && e.key==='Enter' && currentRoomId){ btnCloseChat.click(); }
+    });
+
+    // avaliação do usuário quando fechado
+    onAuthStateChanged(auth, (u)=>{
+      // listener para mostrar avaliação quando a sala do usuário fechar
+      const saved = JSON.parse(localStorage.getItem('chatUser')||'null');
+      if(!saved) return;
+      const r = ref(db, `chats/${saved.roomId}/status/closed`);
+      onValue(r, s=>{
+        if(s.val()===true){
+          // mostra modal simples
+          let box = document.getElementById('ratingBox');
+          if(box) return; // evita duplicar
+          box = document.createElement('div');
+          Object.assign(box.style,{position:'fixed',inset:'0',display:'grid',placeItems:'center',background:'rgba(0,0,0,.6)'});
+          box.id='ratingBox';
+          box.innerHTML=`
+            <div class="login-card" style="max-width:420px">
+              <h3>Como foi seu atendimento?</h3>
+              <form id="ratingForm">
+                <label>Nota (1 a 5)</label>
+                <input id="ratingInput" type="number" min="1" max="5" required />
+                <label>Comentário (opcional)</label>
+                <input id="ratingComment" placeholder="Deixe seu feedback" />
+                <button type="submit">Enviar avaliação</button>
+              </form>
+            </div>`;
+          (chatWrap||document.body).appendChild(box);
+          $('#ratingForm').addEventListener('submit', async e=>{
+            e.preventDefault();
+            const nota = Number($('#ratingInput').value);
+            const comt = $('#ratingComment').value.trim();
+            await update(ref(db, `chats/${saved.roomId}`), { rating:{ score:nota, comment:comt, at:serverTimestamp() } });
+            box.remove();
+          });
+        }
+      });
+    });
+
+    // Logs
+    window.addEventListener('error', e=>console.error('[error]', e.message));
+    window.addEventListener('unhandledrejection', e=>console.error('[promise]', e.reason));
+  </script>
 </body>
 </html>
-
-
-
