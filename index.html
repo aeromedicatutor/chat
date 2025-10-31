@@ -107,15 +107,15 @@
       <aside class="sidebar">
         <div class="brand">Painel de Atendentes</div>
         <div class="search">
-          <form id="admLoginForm">
-            <input id="admEmail" placeholder="email do atendente" />
-            <input id="admPass" type="password" placeholder="senha" />
-            <select id="admGroup">
-              <option value="suporte">Suporte TI</option>
-              <option value="operacao">Operação</option>
-            </select>
-            <button type="submit">Entrar ADM</button>
-            <button type="button" id="admRegister">Cadastrar</button>
+          <form id="admLoginForm" onsubmit="return false">
+            <input id="admEmail" type="email" required placeholder="email do atendente" />
+            <input id="admPass" type="password" required placeholder="senha" />
+          <select id="admGroup">
+            <option value="suporte">Suporte TI</option>
+            <option value="operacao">Operação</option>
+          </select>
+            <button id="admLoginBtn" type="button">Entrar ADM</button>
+            <button id="admRegister" type="button">Cadastrar</button>
           </form>
           <div style="margin-top:8px; display:flex; gap:8px">
             <button id="btnAvailable" class="btn-link">marcar disponível</button>
@@ -332,132 +332,54 @@
     const admLoginForm=$('#admLoginForm'), admEmail=$('#admEmail'), admPass=$('#admPass'), admGroup=$('#admGroup');
     const admRegisterBtn=$('#admRegister'), btnAvailable=$('#btnAvailable'), admLogout=$('#admLogout');
 
-    admRegisterBtn?.addEventListener('click', async ()=>{
-   
-    try{
-        const email = admEmail.value.trim();
-        const pass  = admPass.value;
-        if(!email || !pass){ alert('Preencha email e senha.'); return; }
+    /* ====== FORÇA O LOGIN DO ADM POR CLIQUE (insira aqui, antes do relatório XLSX) ====== */
 
-        const { user } = await createUserWithEmailAndPassword(auth, email, pass);
-        const group = admGroup.value || 'suporte';
+// pega o botão "Entrar ADM" que hoje é type="submit" dentro do form
+const admLoginBtnEl = admLoginForm?.querySelector('button[type="submit"]');
+if (admLoginBtnEl) {
+  admLoginBtnEl.type = 'button';          // evita submit padrão do form
+  admLoginBtnEl.id   = 'admLoginBtn';     // dá um id pra debug/estilo
 
-        await update(ref(db, `roles/${user.uid}`), { group, isAdmin:true, name: email });
-        await update(ref(db, `agents/${user.uid}`), { name: email, group, available:false, online:false, lastSeen: serverTimestamp() });
-
-      alert('Agente cadastrado!');
-           }catch(e){
-           console.error('Cadastro ADM erro:', e);
-           alert(`Falha no cadastro: ${e.code||''} ${e.message||''}`);
-           }
-     });
-
-    admLoginForm?.addEventListener('submit', async e=>{
+  admLoginBtnEl.addEventListener('click', async (e)=>{
     e.preventDefault();
+    console.log('[ADM] clicou em Entrar');
     try{
-     const email = admEmail.value.trim();
-     const pass  = admPass.value;
-     const { user } = await signInWithEmailAndPassword(auth, email, pass);
-     isAgent = true; agentUid = user.uid;
+      const email = (admEmail?.value || '').trim();
+      const pass  = (admPass?.value  || '');
 
-     const roleSnap = await get(ref(db, `roles/${user.uid}`));
-     const role = roleSnap.val() || { group: admGroup.value || 'suporte' };
-     agentGroup = role.group || 'suporte';
+      if(!email || !pass){ alert('Informe email e senha.'); return; }
 
-     await update(ref(db, `agents/${user.uid}`), {
-       name: user.email,
-       group: agentGroup,
-       available: false,
-       online: true,
-       lastSeen: serverTimestamp()
-    });
-      initAdmin();
-     }catch(err){
+      const { user } = await signInWithEmailAndPassword(auth, email, pass);
+
+      isAgent = true;
+      agentUid = user.uid;
+
+      const roleSnap = await get(ref(db, `roles/${user.uid}`));
+      const role = roleSnap.val() || { group: admGroup?.value || 'suporte' };
+      agentGroup = role.group || 'suporte';
+
+      await update(ref(db, `agents/${user.uid}`), {
+        name: user.email,
+        group: agentGroup,
+        available: false,
+        online: true,
+        lastSeen: serverTimestamp()
+      });
+
+      initAdmin(); // carrega a lista de chats do agente
+    }catch(err){
       console.error('Login ADM erro:', err);
       alert(`Falha no login: ${err.code||''} ${err.message||''}`);
-      }
-    });
-
-    btnAvailable?.addEventListener('click', async ()=>{
-      if(!agentUid) return;
-      const agRef = ref(db, `agents/${agentUid}`);
-      const snap = await get(agRef); const cur = snap.val()||{};
-      await update(agRef, { available: !cur.available, online:true, lastSeen: serverTimestamp() });
-      btnAvailable.textContent = (cur.available?'marcar disponível':'marcar indisponível');
-    });
-
-    admLogout?.addEventListener('click', async ()=>{
-      try{
-        if(agentUid) await update(ref(db, `agents/${agentUid}`), { online:false, available:false, lastSeen: serverTimestamp() });
-        await signOut(auth);
-      }catch(e){}
-      location.reload();
-    });
-
-    function initAdmin(){
-      // lista salas; mostra apenas as atribuídas ao agente
-      onValue(ref(db, 'chats'), s=>{
-        const data = s.val()||{};
-        roomsList.innerHTML='';
-        Object.entries(data).forEach(([id, c])=>{
-          if(c.assignedTo?.uid !== agentUid) return; // só minhas
-          const li = document.createElement('li'); li.className='room'; li.dataset.id=id;
-          const icon = document.createElement('span'); icon.className='dot '+(c.status?.userOnline?'online':''); li.appendChild(icon);
-          const body = document.createElement('div'); body.style.flex='1';
-          const title = document.createElement('div'); title.className='title'; title.textContent = (c.userLabel||id)+' • '+(c.assunto||'');
-          const sub = document.createElement('div'); sub.className='sub'; sub.textContent = c.lastMessage ? `${c.lastMessage} • ${new Date(c.lastMessageAt||Date.now()).toLocaleTimeString()}` : 'Sem mensagens';
-          body.appendChild(title); body.appendChild(sub); li.appendChild(body);
-          const badge = document.createElement('span'); badge.className='badge'; badge.style.display='none'; li.appendChild(badge);
-          li.addEventListener('click', ()=> openRoom(id));
-          roomsList.appendChild(li);
-        });
-      });
     }
+  });
+}
 
-    async function openRoom(id){
-      currentRoomId = id;
-      roomTitle.textContent = id;
-      adminMessages.innerHTML='';
-      currentMsgsRef = ref(db, `chats/${id}/messages`);
-
-      onValue(ref(db, `chats/${id}/status/userOnline`), s=>{
-        const online = !!s.val(); roomStatusDot.classList.toggle('online', online);
-        roomStatusText.textContent = online ? 'Usuário online' : 'Usuário offline';
-      });
-
-      onChildAdded(currentMsgsRef, (s)=>{
-        const k = s.key, m = s.val(); const div = document.createElement('div');
-        const mine = m.autorRole==='agent' && m.autorUid===agentUid;
-        div.className = `msg ${mine?'me':'adm'}`;
-        div.innerHTML = `
-          ${m.autorRole==='agent' ? `<div class="small">${esc(m.autorName||'Agente')}</div>` : ''}
-          ${esc(m.texto||'')}
-          <span class="time">${new Date(m.timestamp||Date.now()).toLocaleTimeString()} ${m.readAt?'• Lido':''}</span>`;
-        adminMessages.appendChild(div); scroll(adminMessages);
-        if(m.autorRole==='user') markSeen(id, k);
-      });
-
-      listenTyping(id, 'user', adminMessages, 'typingHintAdmin');
-
-      adminMsgInput.disabled=false; adminMsgForm.querySelector('button').disabled=false;
-      btnCloseChat.disabled=false;
-    }
-
-    adminMsgInput.addEventListener('input', ()=> currentRoomId && setTyping(currentRoomId, 'admin', !!adminMsgInput.value));
-    adminMsgForm.addEventListener('submit', async (e)=>{
-      e.preventDefault(); if(!currentMsgsRef) return;
-      const text = adminMsgInput.value.trim(); if(!text) return;
-      const autorName = (auth.currentUser?.email) || 'Agente';
-      await push(currentMsgsRef, {
-        autorUid: auth.currentUser?.uid || null,
-        autorName,
-        autorRole: 'agent',
-        texto: text,
-        timestamp: Date.now(),
-        destinatario: "Usuário"
-      });
-      adminMsgInput.value=''; setTyping(currentRoomId, 'admin', false);
-    });
+// se alguém apertar Enter no form, só evita submit e replica o clique
+admLoginForm?.addEventListener('submit', (e)=>{
+  e.preventDefault();
+  document.getElementById('admLoginBtn')?.click();
+});
+/* ====== FIM DO BLOCO ====== */
 
     // relatório XLSX
     btnReport?.addEventListener('click', async ()=>{
@@ -538,4 +460,3 @@
   </script>
 </body>
 </html>
-
