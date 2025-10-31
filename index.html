@@ -333,14 +333,24 @@
     const admRegisterBtn=$('#admRegister'), btnAvailable=$('#btnAvailable'), admLogout=$('#admLogout');
 
     admRegisterBtn?.addEventListener('click', async ()=>{
-      try{
-        const { user } = await createUserWithEmailAndPassword(auth, admEmail.value.trim(), admPass.value);
+   
+    try{
+        const email = admEmail.value.trim();
+        const pass  = admPass.value;
+        if(!email || !pass){ alert('Preencha email e senha.'); return; }
+
+        const { user } = await createUserWithEmailAndPassword(auth, email, pass);
         const group = admGroup.value || 'suporte';
-        await update(ref(db, `roles/${user.uid}`), { group, isAdmin:true, name: admEmail.value.trim() });
-        await update(ref(db, `agents/${user.uid}`), { name:user.email, group, available:false, online:false, lastSeen: serverTimestamp() });
-        alert('Agente cadastrado!');
-      }catch(e){ alert('Falha no cadastro'); console.error(e); }
-    });
+
+        await update(ref(db, `roles/${user.uid}`), { group, isAdmin:true, name: email });
+        await update(ref(db, `agents/${user.uid}`), { name: email, group, available:false, online:false, lastSeen: serverTimestamp() });
+
+      alert('Agente cadastrado!');
+           }catch(e){
+           console.error('Cadastro ADM erro:', e);
+           alert(`Falha no cadastro: ${e.code||''} ${e.message||''}`);
+           }
+     });
 
     admLoginForm?.addEventListener('submit', async e=>{
       e.preventDefault();
@@ -515,3 +525,4 @@
   </script>
 </body>
 </html>
+
