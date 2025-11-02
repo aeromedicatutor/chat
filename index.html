@@ -4,23 +4,19 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Chat • Usuário / Operador</title>
-  <!-- index.html v1.1 -->
+  <!-- index.html v1.5 -->
+  <!-- Favicon inline para evitar 404 -->
+  <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="%2319b66a"/><path d="M18 34l8 8 20-20" stroke="white" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'>
   <style>
     :root{
-      /* Paleta (tema padrão: usuário escuro) */
       --green:#19b66a; --green-600:#0f8a50; --green-700:#0a6e40;
       --orange:#ff8a00; --orange-700:#d97200; --white:#ffffff;
 
-      /* Base UI */
       --bg:#0f1216; --panel:#141a1f; --card:#171f28; --line:#1f2a36;
       --text:#eaf0f6; --muted:#9fb2c3;
 
-      /* Bubbles */
-      --bubble-user:#ff8a00; /* laranja */
-      --bubble-op:#0e6b3f;   /* verde */
-      --bubble-text:#fff;
+      --bubble-user:#ff8a00; --bubble-op:#0e6b3f; --bubble-text:#fff;
 
-      /* Status */
       --status-online-bg:#14c37f22; --status-online-fg:#19b66a;
       --status-offline-bg:#f03d3d22; --status-offline-fg:#ff5b5b;
 
@@ -29,16 +25,11 @@
       --shadow-2:0 4px 14px rgba(0,0,0,.18);
     }
 
-    /* ===== Tema do OPERADOR (branco/verde) ===== */
+    /* ===== Tema do OPERADOR (claro/verde) ===== */
     #view-op{
-      --bg:#ffffff;            /* fundo branco */
-      --panel:#f7faf8;         /* painel clarinho */
-      --card:#ffffff;
-      --line:#e6efe9;          /* linhas suaves esverdeadas */
-      --text:#182b1f;          /* texto escuro */
-      --muted:#537161;         /* texto secundário */
-      --bubble-op:#19b66a;     /* mensagens do usuário vistas pelo operador em verde */
-      --bubble-user:#0a6e40;   /* respostas do agente em verde mais escuro */
+      --bg:#ffffff; --panel:#f7faf8; --card:#ffffff; --line:#e6efe9;
+      --text:#0f2418; --muted:#4d6a5a;
+      --bubble-op:#19b66a; --bubble-user:#0a6e40;
       --status-online-bg:#19b66a22; --status-online-fg:#0f8a50;
       --status-offline-bg:#f03d3d22; --status-offline-fg:#c43a3a;
     }
@@ -46,70 +37,41 @@
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
-      margin:0;
-      font-family:Arial, sans-serif;
-      display:flex; flex-direction:column;
-      min-height:100vh;
-      background:var(--bg);
-      color:var(--text);
+      margin:0;font-family:Arial, system-ui, -apple-system, sans-serif;
+      display:flex;flex-direction:column;min-height:100vh;background:var(--bg);color:var(--text);
     }
-
-    a{color:var(--white);opacity:.8;text-decoration:none}
-    a:hover{opacity:1;text-decoration:underline}
     .hidden{display:none!important}
 
-    /* Botões */
-    .btn{
-      appearance:none;border:0;cursor:pointer;
-      background:var(--green);color:var(--white);font-weight:800;
+    .btn{appearance:none;border:0;cursor:pointer;background:var(--green);color:#fff;font-weight:800;
       padding:10px 16px;border-radius:999px;box-shadow:var(--shadow-2);
-      transition:transform .06s ease,filter .12s;
-    }
-    .btn:hover{filter:brightness(1.04)}
-    .btn:active{transform:translateY(1px)}
+      transition:transform .06s ease,filter .12s}
+    .btn:hover{filter:brightness(1.04)} .btn:active{transform:translateY(1px)}
     .btn--pill{padding:6px 12px;font-size:12px}
     .btn--ghost{background:transparent;border:1px solid #264b3a33;color:var(--text)}
 
-    /* Campos */
-    input,select{
-      width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);
-      background:#0c1218; color:var(--text); outline:none; box-shadow:inset 0 1px 0 rgba(255,255,255,.02);
-    }
-    /* Campos no tema claro do operador */
-    #view-op input, #view-op select{
-      background:#ffffff;
-    }
+    input,select{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);
+      background:#0c1218;color:var(--text);outline:none}
+    #view-op input,#view-op select{background:#fff}
 
-    /* Cards / containers */
     .wrap{max-width:980px;margin:0 auto}
-    .login-card{
-      max-width:480px;margin:9vh auto;padding:22px;border:1px solid var(--line);
-      border-radius:var(--radius-xl);background:var(--card);box-shadow:var(--shadow-1)
-    }
+    .login-card{max-width:480px;margin:9vh auto;padding:22px;border:1px solid var(--line);
+      border-radius:var(--radius-xl);background:var(--card);box-shadow:var(--shadow-1)}
     .login-card h1{margin:0 0 12px}
     .login-card label{display:block;margin:10px 0 6px;color:var(--muted)}
 
-    /* Chat comum (usuário e operador) */
     .chat{display:flex;flex-direction:column;min-height:100vh;max-width:980px;margin:0 auto;position:relative}
-    .hdr{
-      position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:10px;
-      padding:12px 14px;border-bottom:1px solid var(--line);background:var(--panel)
-    }
+    .hdr{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:10px;
+      padding:12px 14px;border-bottom:1px solid var(--line);background:var(--panel)}
     .title{font-weight:900;letter-spacing:.3px}
     .sub{font-size:12px;color:var(--muted);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 
     .msgs{flex:1;overflow:auto;padding:18px 18px 10px;background:linear-gradient(#0a0f14,#0a0d12)}
-    /* fundo das msgs no tema claro do operador */
     #view-op .msgs{background:#f6fbf8}
 
-    .msg{
-      display:block;width:fit-content;max-width:75%;
-      margin:8px 0;padding:12px 14px;border-radius:18px;
-      white-space:pre-wrap;word-break:break-word;color:var(--bubble-text);line-height:1.45;clear:both;
-    }
+    .msg{display:block;width:fit-content;max-width:75%;margin:8px 0;padding:12px 14px;border-radius:18px;
+      white-space:pre-wrap;word-break:break-word;color:var(--bubble-text);line-height:1.45;clear:both}
     .msg .meta{display:flex;gap:6px;align-items:center;justify-content:flex-end;margin-top:6px;font-size:11px;color:#eaeff6c7}
     #view-op .msg .meta{color:#20402c99}
-
     .me{background:var(--bubble-user);border-top-left-radius:8px;margin-left:auto;box-shadow:0 6px 18px #ff8a0015;float:right}
     .op{background:var(--bubble-op);border-top-right-radius:8px;margin-right:auto;box-shadow:0 6px 18px #0e6b3f18;float:left}
 
@@ -118,31 +80,31 @@
     .composer input{flex:1}
     .composer button{min-width:64px}
 
-    /* Overlay de finalizado */
     .overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);background:#0003;z-index:6}
-    .overlay .card{background:var(--card);border:1px solid var(--line);padding:16px 18px;border-radius:var(--radius-xl);font-weight:800}
+    .overlay .card{background:var(--card);border:1px solid var(--line);padding:16px;border-radius:var(--radius-xl);font-weight:800}
 
-    /* ===== Painel do Operador ===== */
+    /* OPERADOR */
     .op-layout{display:grid;grid-template-columns:360px 1fr;min-height:100vh}
     .sidebar{display:flex;flex-direction:column;background:var(--panel);border-right:1px solid var(--line)}
-    .brand{padding:18px 16px;font-weight:900;border-bottom:1px solid var(--line)}
+    .brand{padding:18px 16px;font-weight:1000;letter-spacing:.3px;color:#0a4a2c;border-bottom:1px solid var(--line)}
     .search{padding:12px;border-bottom:1px solid var(--line)}
     .list{overflow:auto}
 
-    /* Lista de conversas */
     .room{
       display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-bottom:1px solid var(--line);
-      cursor:pointer;transition:background .12s ease;
+      cursor:pointer;transition:background .12s ease,border-left-color .12s ease;border-left:4px solid transparent
     }
-    .room:hover{background:#11182122}
-    #view-op .room:hover{background:#19b66a0e}
-    .room .title{font-weight:800}
+    /* Hover LARANJA solicitado */
+    .room:hover{background:#fff6ee;border-left-color:#ff8a00}
+    /* Selecionado continua verde para diferenciar */
+    .room.selected{background:#e9f9f1;border-left-color:#19b66a}
+    .room.unread .title{color:#0a4a2c}
+    .room .title{font-weight:900;color:#0d3522}
     .room .sub{font-size:12px;color:var(--muted);margin-top:2px}
     .meta-line{display:flex;gap:8px;align-items:center;margin-top:6px;font-size:12px;color:var(--muted)}
     .wait{margin-left:auto;font-size:12px;color:var(--muted)}
 
-    /* Status pill */
-    .status{display:inline-flex;gap:6px;align-items:center;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700}
+    .status{display:inline-flex;gap:6px;align-items:center;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:900}
     .status.online{background:var(--status-online-bg);color:var(--status-online-fg)}
     .status.offline{background:var(--status-offline-bg);color:var(--status-offline-fg)}
     .status .dot{width:8px;height:8px;border-radius:50%}
@@ -153,11 +115,8 @@
     .tick{font-size:12px;opacity:.8}
     .tick.seen{color:var(--white)}
 
-    /* ===== Responsividade ===== */
-    @media (max-width: 1024px){
-      .op-layout{grid-template-columns:300px 1fr}
-    }
-    @media (max-width: 768px){
+    @media (max-width:1024px){.op-layout{grid-template-columns:300px 1fr}}
+    @media (max-width:768px){
       .op-layout{display:flex;flex-direction:column}
       .sidebar{order:2;height:auto;max-height:40vh}
       .list{max-height:32vh}
@@ -166,7 +125,7 @@
       .composer button{width:100%}
       .msg{max-width:90%}
     }
-    @media (max-width: 480px){
+    @media (max-width:480px){
       .brand{font-size:14px}
       .title{font-size:16px}
       .sub{font-size:11px}
@@ -175,11 +134,12 @@
     }
   </style>
 
+  <!-- Mantemos a lib aqui, mas também garantimos fallback dinâmico no operador.js -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.20.2/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
-<!-- =========== VIEW: USUÁRIO ============ -->
+<!-- ======= VIEW: USUÁRIO ======= -->
 <div id="view-user">
   <div class="wrap">
     <section class="login-card" id="loginCard">
@@ -198,7 +158,6 @@
         </select>
         <button type="submit" class="btn" style="width:100%;margin-top:12px">Entrar no chat</button>
       </form>
-      <!-- Link do operador removido conforme pedido -->
     </section>
 
     <section class="chat hidden" id="chatWrap">
@@ -234,7 +193,7 @@
   </audio>
 </div>
 
-<!-- =========== VIEW: OPERADOR ============ -->
+<!-- ======= VIEW: OPERADOR ======= -->
 <div id="view-op" class="hidden">
   <div class="op-layout">
     <aside class="sidebar">
@@ -267,9 +226,11 @@
 
       <main class="msgs" id="opMessages"></main>
 
-      <!-- Overlay finalizado com botão apagar -->
       <div id="opOverlay" class="overlay">
-        <button id="btnOverlayDelete" class="btn">apagar chat</button>
+        <div class="card" style="display:flex;gap:10px;align-items:center;flex-direction:column">
+          <div style="font-weight:900;margin-bottom:6px">Atendimento encerrado</div>
+          <button id="btnOverlayDelete" class="btn">Apagar conversa</button>
+        </div>
       </div>
 
       <footer class="composer">

@@ -1,4 +1,4 @@
-// app.js v1.1
+// app.js v1.3
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import {
   getDatabase, ref, push, set, update, serverTimestamp, onChildAdded, onChildChanged, onValue, onDisconnect
@@ -34,16 +34,6 @@ const btnAlert=$('#btnAlert'); const userOverlay=$('#userOverlay');
 
 let roomId=null, msgsRef=null, roomRef=null, me={}, waitTimer=null;
 
-// debug visual
-function showBanner(text, kind='info'){
-  let b=document.getElementById('banner'); if(!b){ b=document.createElement('div'); b.id='banner';
-    Object.assign(b.style,{position:'fixed',left:'10px',bottom:'10px',padding:'8px 10px',background:'#111a',color:'#eee',border:'1px solid #333',borderRadius:'6px',font:'12px monospace',zIndex:9999});
-    document.body.appendChild(b);
-  }
-  b.style.color = kind==='error' ? '#ff9aa2' : '#eee';
-  b.textContent = text;
-}
-
 function openChatUI(nome, catLabel){
   loginCard.classList.add('hidden'); chatWrap.classList.remove('hidden');
   chatTitle.textContent = `${nome} • ${catLabel}`;
@@ -52,7 +42,9 @@ function openChatUI(nome, catLabel){
 function attachPresence(){
   const pRef = ref(db, `chats/${roomId}/status/userOnline`);
   const lastRef = ref(db, `chats/${roomId}/status/userLastSeen`);
-  set(pRef, true); onDisconnect(pRef).set(false); onDisconnect(lastRef).set(serverTimestamp());
+  set(pRef, true);
+  onDisconnect(pRef).set(false);
+  onDisconnect(lastRef).set(serverTimestamp());
 }
 
 function attachTyping(){
@@ -65,6 +57,16 @@ function attachTyping(){
   msgInput.addEventListener('input', ()=>{
     if(!roomId) return;
     set(ref(db, `chats/${roomId}/status/typing/user`), !!msgInput.value);
+  });
+}
+
+/* ✅ Mostra para o usuário quando o OPERADOR está online */
+function attachOperatorOnline(){
+  onValue(ref(db, `chats/${roomId}/status/adminOnline`), s=>{
+    const on = !!s.val();
+    subOnline.classList.toggle('online', on);
+    subOnline.classList.toggle('offline', !on);
+    subOnline.innerHTML = `<span class="dot"></span> ${on?'online':'offline'}`;
   });
 }
 
@@ -113,15 +115,11 @@ function attachMessages(){
 }
 
 function attachSignals(uid){
-  // operador envia /signals/{uid} { reset:true }
   onValue(ref(db, `signals/${uid}`), async s=>{
     const v = s.val();
     if(v && v.reset){
       alert('Atendimento finalizado. Vamos reiniciar seu questionário.');
-      try{
-        // limpa o sinal
-        await set(ref(db, `signals/${uid}`), null);
-      }catch(_){}
+      try{ await set(ref(db, `signals/${uid}`), null); }catch(_){}
       try{ await signOut(auth);}catch(_){}
       location.reload();
     }
@@ -138,10 +136,10 @@ $('#loginForm').addEventListener('submit', async (e)=>{
     const uid = await new Promise((res,rej)=>{
       const off = onAuthStateChanged(auth, u=>{ if(u){ off(); res(u.uid); }}, rej);
     });
-    showBanner(`auth uid=${uid}`);
 
     roomId = `${nome.toLowerCase().replace(/[^a-z0-9]+/g,'-')}-${Date.now()}`;
-    roomRef = ref(db, `chats/${roomId}`);
+    const roomRefPath = `chats/${roomId}`;
+    roomRef = ref(db, roomRefPath);
     me = { nome, contato, assunto, categoria };
 
     await set(roomRef, {
@@ -157,20 +155,18 @@ $('#loginForm').addEventListener('submit', async (e)=>{
 
     openChatUI(nome, categoria==='suporte'?'Suporte TI':'Operação');
     roomIdSpan.textContent = `Chat: ${roomId}`;
-    attachPresence(); attachTyping(); attachWait(); attachMessages(); attachClosed(); attachSignals(uid);
+    attachPresence(); attachTyping(); attachOperatorOnline(); attachWait(); attachMessages(); attachClosed(); attachSignals(uid);
     msgInput.disabled=false; msgForm.querySelector('button').disabled=false;
   }catch(err){
     console.error('Falha ao criar chat', err);
-    showBanner(`Erro criando chat: ${err?.code||err?.message||err}`, 'error');
+    alert('Erro ao criar chat. Verifique sua conexão e tente novamente.');
   }
 });
 
-// ALERTA (até 3x por 30 min)
 btnAlert.addEventListener('click', async ()=>{
   if(!roomRef) return;
   const now = Date.now();
   const THIRTY = 30*60*1000;
-
   const snap = await new Promise(res=> onValue(ref(db, `chats/${roomId}/alerts`), s=>{ res(s); }, { onlyOnce:true }));
   const a = snap.val() || { count:0, lastAt:0 };
   if(a.count >= 3 && (now - a.lastAt) < THIRTY){
@@ -180,7 +176,6 @@ btnAlert.addEventListener('click', async ()=>{
   const newCount = (now - a.lastAt) >= THIRTY ? 1 : (a.count+1);
   await update(ref(db, `chats/${roomId}/alerts`), { count:newCount, lastAt: now });
   await push(ref(db, `chats/${roomId}/alerts/events`), { at: now });
-
   alert('Alerta enviado ao operador!');
 });
 
