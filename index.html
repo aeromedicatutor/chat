@@ -4,47 +4,56 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Chat • Usuário / Operador</title>
+  <!-- index.html v1.1 -->
   <style>
     :root{
-      /* Paleta pedida: verde, branco, laranja */
-      --green: #19b66a;
-      --green-600: #0f8a50;
-      --green-700: #0a6e40;
-      --orange: #ff8a00;
-      --orange-700: #d97200;
-      --white: #ffffff;
+      /* Paleta (tema padrão: usuário escuro) */
+      --green:#19b66a; --green-600:#0f8a50; --green-700:#0a6e40;
+      --orange:#ff8a00; --orange-700:#d97200; --white:#ffffff;
 
       /* Base UI */
-      --bg: #0f1216;            /* fundo principal (dark moderno p/ contrastar com branco/verde/laranja) */
-      --panel: #141a1f;         /* cartões / barras */
-      --card: #171f28;
-      --line: #1f2a36;
-      --text: #eaf0f6;
-      --muted: #9fb2c3;
+      --bg:#0f1216; --panel:#141a1f; --card:#171f28; --line:#1f2a36;
+      --text:#eaf0f6; --muted:#9fb2c3;
 
       /* Bubbles */
-      --bubble-user: #ff8a00;   /* laranja */
-      --bubble-op:   #0e6b3f;   /* verde mais escuro */
-      --bubble-text: #fff;
+      --bubble-user:#ff8a00; /* laranja */
+      --bubble-op:#0e6b3f;   /* verde */
+      --bubble-text:#fff;
 
-      /* Badges / status */
-      --status-online-bg: #14c37f22;
-      --status-online-fg: #19b66a;
-      --status-offline-bg:#f03d3d22;
-      --status-offline-fg:#ff5b5b;
+      /* Status */
+      --status-online-bg:#14c37f22; --status-online-fg:#19b66a;
+      --status-offline-bg:#f03d3d22; --status-offline-fg:#ff5b5b;
 
-      --radius-lg: 16px;
-      --radius-xl: 22px;
-      --shadow-1: 0 6px 22px rgba(0,0,0,.24);
-      --shadow-2: 0 4px 14px rgba(0,0,0,.18);
+      --radius-lg:16px; --radius-xl:22px;
+      --shadow-1:0 6px 22px rgba(0,0,0,.24);
+      --shadow-2:0 4px 14px rgba(0,0,0,.18);
+    }
+
+    /* ===== Tema do OPERADOR (branco/verde) ===== */
+    #view-op{
+      --bg:#ffffff;            /* fundo branco */
+      --panel:#f7faf8;         /* painel clarinho */
+      --card:#ffffff;
+      --line:#e6efe9;          /* linhas suaves esverdeadas */
+      --text:#182b1f;          /* texto escuro */
+      --muted:#537161;         /* texto secundário */
+      --bubble-op:#19b66a;     /* mensagens do usuário vistas pelo operador em verde */
+      --bubble-user:#0a6e40;   /* respostas do agente em verde mais escuro */
+      --status-online-bg:#19b66a22; --status-online-fg:#0f8a50;
+      --status-offline-bg:#f03d3d22; --status-offline-fg:#c43a3a;
     }
 
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
-      margin:0;background:var(--bg);color:var(--text);
-      font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial;
+      margin:0;
+      font-family:Arial, sans-serif;
+      display:flex; flex-direction:column;
+      min-height:100vh;
+      background:var(--bg);
+      color:var(--text);
     }
+
     a{color:var(--white);opacity:.8;text-decoration:none}
     a:hover{opacity:1;text-decoration:underline}
     .hidden{display:none!important}
@@ -53,17 +62,22 @@
     .btn{
       appearance:none;border:0;cursor:pointer;
       background:var(--green);color:var(--white);font-weight:800;
-      padding:10px 16px;border-radius:999px;box-shadow:var(--shadow-2);transition:transform .06s ease,filter .12s;
+      padding:10px 16px;border-radius:999px;box-shadow:var(--shadow-2);
+      transition:transform .06s ease,filter .12s;
     }
     .btn:hover{filter:brightness(1.04)}
     .btn:active{transform:translateY(1px)}
     .btn--pill{padding:6px 12px;font-size:12px}
-    .btn--ghost{background:transparent;border:1px solid #264b3a;color:var(--text)}
+    .btn--ghost{background:transparent;border:1px solid #264b3a33;color:var(--text)}
 
     /* Campos */
     input,select{
       width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);
-      background:#0c1218;color:var(--text);outline:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.02);
+      background:#0c1218; color:var(--text); outline:none; box-shadow:inset 0 1px 0 rgba(255,255,255,.02);
+    }
+    /* Campos no tema claro do operador */
+    #view-op input, #view-op select{
+      background:#ffffff;
     }
 
     /* Cards / containers */
@@ -75,100 +89,90 @@
     .login-card h1{margin:0 0 12px}
     .login-card label{display:block;margin:10px 0 6px;color:var(--muted)}
 
-    /* Chat (User & Operador) */
-    .chat{display:flex;flex-direction:column;height:100vh;max-width:980px;margin:0 auto;position:relative}
-    .chat .hdr{
+    /* Chat comum (usuário e operador) */
+    .chat{display:flex;flex-direction:column;min-height:100vh;max-width:980px;margin:0 auto;position:relative}
+    .hdr{
       position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:10px;
       padding:12px 14px;border-bottom:1px solid var(--line);background:var(--panel)
     }
-    .chat .title{font-weight:900;letter-spacing:.3px}
-    .chat .sub{font-size:12px;color:var(--muted);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-    .msgs{
-      flex:1;overflow:auto;padding:18px 18px 10px;background:linear-gradient(#0a0f14,#0a0d12)
-    }
+    .title{font-weight:900;letter-spacing:.3px}
+    .sub{font-size:12px;color:var(--muted);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+
+    .msgs{flex:1;overflow:auto;padding:18px 18px 10px;background:linear-gradient(#0a0f14,#0a0d12)}
+    /* fundo das msgs no tema claro do operador */
+    #view-op .msgs{background:#f6fbf8}
+
     .msg{
-  display:block;
-  width:fit-content;
-  max-width:75%;
-  margin:8px 0;
-  padding:12px 14px;
-  border-radius:18px;
-  white-space:pre-wrap;
-  word-break:break-word;
-  color:var(--bubble-text);
-  line-height:1.45;
-  clear:both; /* garante empilhamento */
-}
-
-.me{
-  background:var(--bubble-user);
-  border-top-left-radius:8px;
-  margin-left:auto;
-  box-shadow:0 6px 18px #ff8a0015;
-  float:right;
-}
-
-.op{
-  background:var(--bubble-op);
-  border-top-right-radius:8px;
-  margin-right:auto;
-  box-shadow:0 6px 18px #0e6b3f18;
-  float:left;
-}
+      display:block;width:fit-content;max-width:75%;
+      margin:8px 0;padding:12px 14px;border-radius:18px;
+      white-space:pre-wrap;word-break:break-word;color:var(--bubble-text);line-height:1.45;clear:both;
+    }
     .msg .meta{display:flex;gap:6px;align-items:center;justify-content:flex-end;margin-top:6px;font-size:11px;color:#eaeff6c7}
-    .me{background:var(--bubble-user);border-top-left-radius:8px;margin-left:auto;box-shadow: 0 6px 18px #ff8a0015}
-    .op{background:var(--bubble-op);border-top-right-radius:8px;margin-right:auto;box-shadow: 0 6px 18px #0e6b3f18}
+    #view-op .msg .meta{color:#20402c99}
+
+    .me{background:var(--bubble-user);border-top-left-radius:8px;margin-left:auto;box-shadow:0 6px 18px #ff8a0015;float:right}
+    .op{background:var(--bubble-op);border-top-right-radius:8px;margin-right:auto;box-shadow:0 6px 18px #0e6b3f18;float:left}
+
     .composer{padding:10px 12px;border-top:1px solid var(--line);background:var(--panel)}
     .composer form{display:flex;gap:10px}
     .composer input{flex:1}
     .composer button{min-width:64px}
 
     /* Overlay de finalizado */
-    .overlay {
-      position:absolute; inset:0; display:none; align-items:center; justify-content:center;
-      backdrop-filter: blur(4px); background: #0006; z-index:6;
-    }
-    .overlay .card { background:var(--card); border:1px solid var(--line); padding:16px 18px; border-radius:var(--radius-xl); font-weight:800 }
+    .overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);background:#0003;z-index:6}
+    .overlay .card{background:var(--card);border:1px solid var(--line);padding:16px 18px;border-radius:var(--radius-xl);font-weight:800}
 
-    /* Operador layout */
-    .op-layout{display:grid;grid-template-columns:360px 1fr;height:100vh}
+    /* ===== Painel do Operador ===== */
+    .op-layout{display:grid;grid-template-columns:360px 1fr;min-height:100vh}
     .sidebar{display:flex;flex-direction:column;background:var(--panel);border-right:1px solid var(--line)}
     .brand{padding:18px 16px;font-weight:900;border-bottom:1px solid var(--line)}
     .search{padding:12px;border-bottom:1px solid var(--line)}
     .list{overflow:auto}
 
-    /* Card da conversa (lista) */
+    /* Lista de conversas */
     .room{
       display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-bottom:1px solid var(--line);
       cursor:pointer;transition:background .12s ease;
     }
-    .room:hover{background:#111821}
+    .room:hover{background:#11182122}
+    #view-op .room:hover{background:#19b66a0e}
     .room .title{font-weight:800}
     .room .sub{font-size:12px;color:var(--muted);margin-top:2px}
-    .room .meta-line{
-      display:flex;gap:8px;align-items:center;margin-top:6px;font-size:12px;color:var(--muted)
-    }
+    .meta-line{display:flex;gap:8px;align-items:center;margin-top:6px;font-size:12px;color:var(--muted)}
     .wait{margin-left:auto;font-size:12px;color:var(--muted)}
 
-    /* Status pill (online/offline) */
-    .status{
-      display:inline-flex;gap:6px;align-items:center;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;
-    }
+    /* Status pill */
+    .status{display:inline-flex;gap:6px;align-items:center;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700}
     .status.online{background:var(--status-online-bg);color:var(--status-online-fg)}
     .status.offline{background:var(--status-offline-bg);color:var(--status-offline-fg)}
     .status .dot{width:8px;height:8px;border-radius:50%}
     .status.online .dot{background:var(--status-online-fg)}
     .status.offline .dot{background:var(--status-offline-fg)}
 
-    /* Badge de alerta */
-    .badge-alert{
-      display:inline-block;padding:2px 8px;border-radius:999px;background:var(--orange);color:#1f1200;
-      font-weight:900;font-size:11px;box-shadow:var(--shadow-2)
-    }
-
-    /* Ticks */
+    .badge-alert{display:inline-block;padding:2px 8px;border-radius:999px;background:var(--orange);color:#1f1200;font-weight:900;font-size:11px;box-shadow:var(--shadow-2)}
     .tick{font-size:12px;opacity:.8}
     .tick.seen{color:var(--white)}
+
+    /* ===== Responsividade ===== */
+    @media (max-width: 1024px){
+      .op-layout{grid-template-columns:300px 1fr}
+    }
+    @media (max-width: 768px){
+      .op-layout{display:flex;flex-direction:column}
+      .sidebar{order:2;height:auto;max-height:40vh}
+      .list{max-height:32vh}
+      .hdr{gap:8px}
+      .composer form{flex-direction:column}
+      .composer button{width:100%}
+      .msg{max-width:90%}
+    }
+    @media (max-width: 480px){
+      .brand{font-size:14px}
+      .title{font-size:16px}
+      .sub{font-size:11px}
+      .msgs{padding:14px 12px 8px}
+      .composer{padding:8px}
+    }
   </style>
 
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.20.2/dist/xlsx.full.min.js"></script>
@@ -194,7 +198,7 @@
         </select>
         <button type="submit" class="btn" style="width:100%;margin-top:12px">Entrar no chat</button>
       </form>
-      <p class="hint" style="color:var(--muted);margin-top:10px">Painel do Operador? <a href="#/operador">Abrir</a></p>
+      <!-- Link do operador removido conforme pedido -->
     </section>
 
     <section class="chat hidden" id="chatWrap">

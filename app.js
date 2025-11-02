@@ -1,4 +1,4 @@
-// app.js
+// app.js v1.1
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import {
   getDatabase, ref, push, set, update, serverTimestamp, onChildAdded, onChildChanged, onValue, onDisconnect
