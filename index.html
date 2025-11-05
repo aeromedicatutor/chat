@@ -3,160 +3,84 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Chat • Usuário / Operador</title>
-  <!-- index.html v1.5 -->
-  <!-- Favicon inline para evitar 404 -->
+  <title>Chat Aeromédica</title>
+
+  <!-- index.html v2.1 (inalterado) -->
   <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="%2319b66a"/><path d="M18 34l8 8 20-20" stroke="white" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'>
+
   <style>
-    :root{
-      --green:#19b66a; --green-600:#0f8a50; --green-700:#0a6e40;
-      --orange:#ff8a00; --orange-700:#d97200; --white:#ffffff;
-
-      --bg:#0f1216; --panel:#141a1f; --card:#171f28; --line:#1f2a36;
-      --text:#eaf0f6; --muted:#9fb2c3;
-
-      --bubble-user:#ff8a00; --bubble-op:#0e6b3f; --bubble-text:#fff;
-
-      --status-online-bg:#14c37f22; --status-online-fg:#19b66a;
-      --status-offline-bg:#f03d3d22; --status-offline-fg:#ff5b5b;
-
-      --radius-lg:16px; --radius-xl:22px;
-      --shadow-1:0 6px 22px rgba(0,0,0,.24);
-      --shadow-2:0 4px 14px rgba(0,0,0,.18);
-    }
-
-    /* ===== Tema do OPERADOR (claro/verde) ===== */
-    #view-op{
-      --bg:#ffffff; --panel:#f7faf8; --card:#ffffff; --line:#e6efe9;
-      --text:#0f2418; --muted:#4d6a5a;
-      --bubble-op:#19b66a; --bubble-user:#0a6e40;
-      --status-online-bg:#19b66a22; --status-online-fg:#0f8a50;
-      --status-offline-bg:#f03d3d22; --status-offline-fg:#c43a3a;
-    }
-
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;font-family:Arial, system-ui, -apple-system, sans-serif;
-      display:flex;flex-direction:column;min-height:100vh;background:var(--bg);color:var(--text);
-    }
-    .hidden{display:none!important}
-
-    .btn{appearance:none;border:0;cursor:pointer;background:var(--green);color:#fff;font-weight:800;
-      padding:10px 16px;border-radius:999px;box-shadow:var(--shadow-2);
-      transition:transform .06s ease,filter .12s}
-    .btn:hover{filter:brightness(1.04)} .btn:active{transform:translateY(1px)}
-    .btn--pill{padding:6px 12px;font-size:12px}
-    .btn--ghost{background:transparent;border:1px solid #264b3a33;color:var(--text)}
-
-    input,select{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);
-      background:#0c1218;color:var(--text);outline:none}
+    :root{--green:#19b66a;--green-600:#0f8a50;--orange:#ff8a00;--white:#fff;--bg:#0f1216;--panel:#141a1f;--card:#171f28;--line:#1f2a36;--text:#eaf0f6;--muted:#9fb2c3;--bubble-user:#ff8a00;--bubble-op:#0e6b3f;--bubble-text:#fff;--status-online-bg:#14c37f22;--status-online-fg:#19b66a;--status-offline-bg:#f03d3d22;--status-offline-fg:#ff5b5b;--radius-xl:18px;--shadow:0 3px 10px rgba(0,0,0,.12)}
+    #view-op{--bg:#fff;--panel:#f7faf8;--card:#fff;--line:#e6efe9;--text:#0f2418;--muted:#4d6a5a;--bubble-op:#19b66a;--bubble-user:#0a6e40;--status-online-bg:#19b66a22;--status-online-fg:#0f8a50;--status-offline-bg:#f03d3d22;--status-offline-fg:#c43a3a}
+    *{box-sizing:border-box}html,body{height:100%}body{margin:0;font-family:system-ui,Arial,sans-serif;background:var(--bg);color:var(--text)}
+    .hidden{display:none!important}.wrap{max-width:980px;margin:0 auto}
+    .btn{appearance:none;border:0;background:var(--green);color:#fff;font-weight:800;cursor:pointer;padding:10px 16px;border-radius:999px;box-shadow:var(--shadow);transition:filter .12s}
+    .btn:hover{filter:brightness(1.05)} .btn--ghost{background:transparent;border:1px solid var(--line);color:var(--text)}
+    .btn--pill{padding:6px 10px;font-size:12px} input,select{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:#0c1218;color:var(--text);outline:none}
     #view-op input,#view-op select{background:#fff}
-
-    .wrap{max-width:980px;margin:0 auto}
-    .login-card{max-width:480px;margin:9vh auto;padding:22px;border:1px solid var(--line);
-      border-radius:var(--radius-xl);background:var(--card);box-shadow:var(--shadow-1)}
-    .login-card h1{margin:0 0 12px}
-    .login-card label{display:block;margin:10px 0 6px;color:var(--muted)}
-
-    .chat{display:flex;flex-direction:column;min-height:100vh;max-width:980px;margin:0 auto;position:relative}
-    .hdr{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:10px;
-      padding:12px 14px;border-bottom:1px solid var(--line);background:var(--panel)}
-    .title{font-weight:900;letter-spacing:.3px}
-    .sub{font-size:12px;color:var(--muted);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-
-    .msgs{flex:1;overflow:auto;padding:18px 18px 10px;background:linear-gradient(#0a0f14,#0a0d12)}
+    .login-card{max-width:520px;margin:8vh auto;padding:18px;border:1px solid var(--line);border-radius:var(--radius-xl);background:var(--card)}
+    .login-card h1{margin:0 0 10px}.login-card label{display:block;margin:10px 0 6px;color:var(--muted)}
+    .inline{display:flex;gap:10px;align-items:center;margin-top:6px;color:var(--muted);font-size:14px}
+    .chat{display:flex;flex-direction:column;height:100vh;max-width:980px;margin:0 auto;position:relative}
+    .hdr{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line);background:var(--panel)}
+    .title{font-weight:900;letter-spacing:.3px}.sub{font-size:12px;color:var(--muted);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .msgs{flex:1;overflow:auto;padding:16px 14px 10px;background:linear-gradient(#0a0f14,#0a0d12)}
     #view-op .msgs{background:#f6fbf8}
-
-    .msg{display:block;width:fit-content;max-width:75%;margin:8px 0;padding:12px 14px;border-radius:18px;
-      white-space:pre-wrap;word-break:break-word;color:var(--bubble-text);line-height:1.45;clear:both}
-    .msg .meta{display:flex;gap:6px;align-items:center;justify-content:flex-end;margin-top:6px;font-size:11px;color:#eaeff6c7}
-    #view-op .msg .meta{color:#20402c99}
-    .me{background:var(--bubble-user);border-top-left-radius:8px;margin-left:auto;box-shadow:0 6px 18px #ff8a0015;float:right}
-    .op{background:var(--bubble-op);border-top-right-radius:8px;margin-right:auto;box-shadow:0 6px 18px #0e6b3f18;float:left}
-
-    .composer{padding:10px 12px;border-top:1px solid var(--line);background:var(--panel)}
-    .composer form{display:flex;gap:10px}
-    .composer input{flex:1}
-    .composer button{min-width:64px}
-
+    .msg{display:block;width:fit-content;max-width:78%;margin:8px 0;padding:10px 12px;border-radius:16px;white-space:pre-wrap;word-break:break-word;color:var(--bubble-text);line-height:1.45}
+    .msg .meta{display:flex;gap:6px;align-items:center;justify-content:flex-end;margin-top:6px;font-size:11px;opacity:.85}
+    .me{background:var(--bubble-user);border-top-left-radius:8px;margin-left:auto}
+    .op{background:var(--bubble-op);border-top-right-radius:8px;margin-right:auto}
+    .composer{position:sticky;bottom:0;padding:8px 10px;border-top:1px solid var(--line);background:var(--panel)}
+    .composer form{display:flex;gap:10px}.composer input{flex:1}
     .overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);background:#0003;z-index:6}
     .overlay .card{background:var(--card);border:1px solid var(--line);padding:16px;border-radius:var(--radius-xl);font-weight:800}
-
-    /* OPERADOR */
-    .op-layout{display:grid;grid-template-columns:360px 1fr;min-height:100vh}
+    .op-layout{display:grid;grid-template-columns:360px 1fr;height:100vh}
     .sidebar{display:flex;flex-direction:column;background:var(--panel);border-right:1px solid var(--line)}
-    .brand{padding:18px 16px;font-weight:1000;letter-spacing:.3px;color:#0a4a2c;border-bottom:1px solid var(--line)}
-    .search{padding:12px;border-bottom:1px solid var(--line)}
-    .list{overflow:auto}
-
-    .room{
-      display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-bottom:1px solid var(--line);
-      cursor:pointer;transition:background .12s ease,border-left-color .12s ease;border-left:4px solid transparent
-    }
-    /* Hover LARANJA solicitado */
-    .room:hover{background:#fff6ee;border-left-color:#ff8a00}
-    /* Selecionado continua verde para diferenciar */
-    .room.selected{background:#e9f9f1;border-left-color:#19b66a}
-    .room.unread .title{color:#0a4a2c}
-    .room .title{font-weight:900;color:#0d3522}
-    .room .sub{font-size:12px;color:var(--muted);margin-top:2px}
+    .brand{padding:14px 12px;font-weight:1000;letter-spacing:.3px;color:#0a4a2c;border-bottom:1px solid var(--line);display:flex;gap:8px;justify-content:space-between}
+    .search{padding:10px;border-bottom:1px solid var(--line)}.list{overflow:auto}
+    .side-actions{padding:10px;border-top:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap}
+    .room{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:flex-start;padding:12px;border-bottom:1px solid var(--line);cursor:pointer;transition:background .12s,border-left-color .12s;border-left:4px solid transparent}
+    .room:hover{background:#fff6ee;border-left-color:#ff8a00}.room.selected{background:#e9f9f1;border-left-color:#19b66a}
+    .room .title{font-weight:900;color:#0d3522}.room .sub{font-size:12px;color:var(--muted);margin-top:2px}
     .meta-line{display:flex;gap:8px;align-items:center;margin-top:6px;font-size:12px;color:var(--muted)}
     .wait{margin-left:auto;font-size:12px;color:var(--muted)}
-
     .status{display:inline-flex;gap:6px;align-items:center;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:900}
     .status.online{background:var(--status-online-bg);color:var(--status-online-fg)}
     .status.offline{background:var(--status-offline-bg);color:var(--status-offline-fg)}
     .status .dot{width:8px;height:8px;border-radius:50%}
     .status.online .dot{background:var(--status-online-fg)}
     .status.offline .dot{background:var(--status-offline-fg)}
-
-    .badge-alert{display:inline-block;padding:2px 8px;border-radius:999px;background:var(--orange);color:#1f1200;font-weight:900;font-size:11px;box-shadow:var(--shadow-2)}
-    .tick{font-size:12px;opacity:.8}
-    .tick.seen{color:var(--white)}
-
+    .badge-alert{display:inline-block;padding:2px 8px;border-radius:999px;background:var(--orange);color:#1f1200;font-weight:900;font-size:11px}
+    .room .trash{appearance:none;border:0;background:transparent;font-size:18px;cursor:pointer;opacity:.7}.room .trash:hover{opacity:1}
+    .tabs{display:flex;gap:8px;padding:10px;border-bottom:1px solid var(--line);background:var(--panel)}
+    .tab{padding:6px 10px;border-radius:999px;border:1px solid var(--line);cursor:pointer}.tab.active{background:var(--green);color:#fff;border-color:transparent}
+    .saved-wrap{display:flex;flex-direction:column;height:100vh}.saved-list{flex:1;overflow:auto}
     @media (max-width:1024px){.op-layout{grid-template-columns:300px 1fr}}
-    @media (max-width:768px){
-      .op-layout{display:flex;flex-direction:column}
-      .sidebar{order:2;height:auto;max-height:40vh}
-      .list{max-height:32vh}
-      .hdr{gap:8px}
-      .composer form{flex-direction:column}
-      .composer button{width:100%}
-      .msg{max-width:90%}
-    }
-    @media (max-width:480px){
-      .brand{font-size:14px}
-      .title{font-size:16px}
-      .sub{font-size:11px}
-      .msgs{padding:14px 12px 8px}
-      .composer{padding:8px}
-    }
+    @media (max-width:768px){.op-layout{display:flex;flex-direction:column}.sidebar{order:2;height:auto;max-height:40vh}.list{max-height:32vh}.composer form{flex-direction:column}.composer button{width:100%}.msg{max-width:92%}}
   </style>
-
-  <!-- Mantemos a lib aqui, mas também garantimos fallback dinâmico no operador.js -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.20.2/dist/xlsx.full.min.js"></script>
 </head>
 <body>
+
+<!-- reprodutor único para TODAS as notificações -->
+<audio id="notify" preload="auto">
+  <source src="./oplata.mp3" type="audio/mpeg">
+</audio>
 
 <!-- ======= VIEW: USUÁRIO ======= -->
 <div id="view-user">
   <div class="wrap">
     <section class="login-card" id="loginCard">
-      <h1>Falar com o Operador</h1>
+      <h1>Chat Online | Fale conosco</h1>
       <form id="loginForm">
-        <label>Seu nome</label>
-        <input id="nomeInput" required placeholder="Ex.: Ana" />
-        <label>Contato</label>
-        <input id="contatoInput" required placeholder="telefone ou email" />
-        <label>Assunto</label>
-        <input id="assuntoInput" required placeholder="Ex.: Dúvida sobre pagamento" />
+        <label>Nome</label><input id="nomeInput" required placeholder="Digite seu nome..." />
+        <label>Contato</label><input id="contatoInput" required placeholder="Telefone ou Email" />
+        <label>Assunto</label><input id="assuntoInput" required placeholder="Qual o assunto ?" />
         <label>Categoria</label>
         <select id="categoriaSelect" required>
           <option value="suporte">Suporte TI</option>
-          <option value="operacao">Operação</option>
+          <option value="operacao">Logistica</option>
         </select>
-        <button type="submit" class="btn" style="width:100%;margin-top:12px">Entrar no chat</button>
+        <div class="inline"><input id="tmpCheck" type="checkbox" /><label for="tmpCheck">Chat temporário (Apaga chat caso fique offline)</label></div>
+        <button type="submit" class="btn" style="width:100%;margin-top:12px">Iniciar Chat</button>
       </form>
     </section>
 
@@ -175,36 +99,27 @@
           <button id="btnLeave" class="btn btn--pill btn--ghost">desconectar</button>
         </div>
       </header>
-
       <main class="msgs" id="messages"></main>
       <div id="userOverlay" class="overlay"><div class="card">Chat Finalizado</div></div>
-
       <footer class="composer">
         <form id="msgForm">
           <input id="msgInput" type="text" placeholder="Digite uma mensagem…" autocomplete="off" disabled />
           <button type="submit" title="Enviar" class="btn">Enviar</button>
         </form>
-        <div id="typingHint" class="center" style="text-align:center;margin-top:6px;color:var(--muted)"></div>
+        <div id="typingHint" style="text-align:center;margin-top:6px;color:var(--muted)"></div>
       </footer>
     </section>
   </div>
-  <audio id="ding" preload="auto">
-    <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
-  </audio>
 </div>
 
 <!-- ======= VIEW: OPERADOR ======= -->
 <div id="view-op" class="hidden">
   <div class="op-layout">
     <aside class="sidebar">
-      <div class="brand">Painel do Operador</div>
-      <div class="search">
-        <input id="filterInput" placeholder="filtrar por nome/assunto…" />
-      </div>
+      <div class="brand"><span>Painel do Operador</span><button id="btnGoSaved" class="btn btn--pill btn--ghost" title="Consultar chats">Consultar</button></div>
+      <div class="search"><input id="filterInput" placeholder="filtrar por nome/assunto…" /></div>
       <div class="list" id="roomsList"></div>
-      <div style="padding:12px;border-top:1px solid var(--line)">
-        <button id="btnExport" class="btn" style="width:100%">Exportar XLSX</button>
-      </div>
+      <div class="side-actions"><button id="btnBulkDelete" class="btn btn--pill">Apagar selecionados</button><button id="btnExport" class="btn btn--pill btn--ghost">Exportar XLSX</button></div>
     </aside>
 
     <section class="op-chat" style="display:flex;flex-direction:column">
@@ -213,37 +128,29 @@
           <div class="title" id="roomTitle">Selecione um chat</div>
           <div class="sub" style="gap:12px">
             <span id="roomOnlineDot" class="status offline"><span class="dot"></span> offline</span>
-            <span id="roomSub">—</span>
-            <span id="opTyping" style="color:var(--muted)"></span>
+            <span id="roomSub">—</span><span id="opTyping" style="color:var(--muted)"></span>
           </div>
         </div>
         <div class="right" style="display:flex;gap:8px;align-items:center">
           <span class="btn btn--pill btn--ghost" id="waitBadge">aguardando —</span>
+          <button class="btn btn--pill" id="btnSave" disabled>salvar</button>
           <button class="btn btn--pill" id="btnFinish" disabled>finalizar</button>
-          <button class="btn btn--pill btn--ghost" id="btnRegister" disabled>registra</button>
         </div>
       </header>
-
       <main class="msgs" id="opMessages"></main>
-
-      <div id="opOverlay" class="overlay">
-        <div class="card" style="display:flex;gap:10px;align-items:center;flex-direction:column">
-          <div style="font-weight:900;margin-bottom:6px">Atendimento encerrado</div>
-          <button id="btnOverlayDelete" class="btn">Apagar conversa</button>
-        </div>
-      </div>
-
-      <footer class="composer">
-        <form id="opForm">
-          <input id="opInput" type="text" placeholder="Escreva uma resposta…" autocomplete="off" disabled />
-          <button type="submit" title="Enviar" class="btn" disabled>Enviar</button>
-        </form>
-      </footer>
+      <div id="opOverlay" class="overlay"><div class="card" style="display:flex;gap:10px;align-items:center;flex-direction:column"><div style="font-weight:900;margin-bottom:6px">Atendimento encerrado</div><button id="btnOverlayDelete" class="btn">Apagar conversa</button></div></div>
+      <footer class="composer"><form id="opForm"><input id="opInput" type="text" placeholder="Escreva uma resposta…" autocomplete="off" disabled /><button type="submit" title="Enviar" class="btn" disabled>Enviar</button></form></footer>
     </section>
   </div>
-  <audio id="opDing" preload="auto">
-    <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
-  </audio>
+</div>
+
+<!-- ======= VIEW: SALVOS / ARQUIVADOS ======= -->
+<div id="view-saved" class="hidden">
+  <div class="saved-wrap wrap">
+    <div class="tabs"><button class="tab active" data-tab="saved">Salvos</button><button class="tab" data-tab="archives">Arquivados</button><button id="btnBackToOp" class="btn btn--pill btn--ghost" style="margin-left:auto">Voltar ao Operador</button></div>
+    <div class="search" style="padding:10px"><input id="savedFilter" placeholder="buscar por nome/assunto…" /></div>
+    <div class="saved-list" id="savedList"></div>
+  </div>
 </div>
 
 <script type="module" src="./app.js"></script>
